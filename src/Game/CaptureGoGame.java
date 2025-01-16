@@ -1,6 +1,7 @@
 package Game;
 
 import java.util.*;
+import Players.NaiveAI;
 
 public class CaptureGoGame {
     private CaptureGoBoard board;
@@ -210,13 +211,28 @@ public class CaptureGoGame {
             Player currentPlayer = isPlayer1Turn ? player1 : player2;
             System.out.println(currentPlayer.getName() + "'s turn (" + (isPlayer1Turn ? "White" : "Blue") + ").");
 
-            System.out.print("Enter row (0 to " + (size) + ") or -1 to quit: ");
-            int row = scanner.nextInt();
-            if (row == -1) break;
+            int row, col;
+            if (currentPlayer instanceof NaiveAI) {
+                // Let the AI choose a move
+                Cell move = ((NaiveAI) currentPlayer).chooseMove(board);
+                if (move == null) {
+                    System.out.println("No valid moves available. Game over!");
+                    break;
+                }
+                row = move.getRow() / 2; // Convert actual row to logical row
+                col = move.getCol() / 2; // Convert actual col to logical col
+                System.out.println(currentPlayer.getName() + " chooses (" + row + ", " + col + ").");
+            } else {
+                // Let the human player make a move
+                System.out.print("Enter row (0 to " + (size) + ") or -1 to quit: ");
+                row = scanner.nextInt();
+                if (row == -1) break;
 
-            System.out.print("Enter column (0 to " + (size) + "): ");
-            int col = scanner.nextInt();
+                System.out.print("Enter column (0 to " + (size) + "): ");
+                col = scanner.nextInt();
+            }
 
+            // Validate and process the move
             if (board.isValidMove(row, col)) {
                 placeStone(row, col, currentPlayer);
                 isPlayer1Turn = !isPlayer1Turn; // Switch turns
@@ -228,6 +244,7 @@ public class CaptureGoGame {
         System.out.println("Game over! Final board:");
         board.render();
     }
+
 
 
     /**

@@ -1,7 +1,9 @@
 package Game;
 
+import Players.NaiveAI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class CaptureGoBoard {
     private final int size;
@@ -10,6 +12,14 @@ public class CaptureGoBoard {
     public CaptureGoBoard(int size) {
         this.size = size;
         initializeBoard();
+    }
+
+    /**
+     * Get the size of the board.
+     * @return the size of the board (logical size, not including the extra grid spaces for intersections)
+     */
+    public int getSize() {
+        return size;
     }
 
     /**
@@ -140,6 +150,33 @@ public class CaptureGoBoard {
     }
 
     public static void main(String[] args) {
-        CaptureGoGame game = new CaptureGoGame(6, new Player("Alice", Cell.WHITE_O), new Player("Bob", Cell.BLUE_O));
+//        CaptureGoGame game = new CaptureGoGame(6, new Player("Alice", Cell.WHITE_O), new Player("Bob", Cell.BLUE_O));
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Welcome to Capture Go!");
+        System.out.print("Enter the name of Player 1: ");
+        String player1Name = scanner.nextLine();
+
+        System.out.print("Should Player 1 be an AI? (yes/no): ");
+        boolean isPlayer1AI = scanner.nextLine().trim().equalsIgnoreCase("yes");
+
+        System.out.print("Enter the name of Player 2: ");
+        String player2Name = scanner.nextLine();
+
+        System.out.print("Should Player 2 be an AI? (yes/no): ");
+        boolean isPlayer2AI = scanner.nextLine().trim().equalsIgnoreCase("yes");
+
+        Player player1 = isPlayer1AI
+                ? new NaiveAI(player1Name, Cell.WHITE_O)
+                : new Player(player1Name, Cell.WHITE_O);
+
+        Player player2 = isPlayer2AI
+                ? new NaiveAI(player2Name, Cell.BLUE_O)
+                : new Player(player2Name, Cell.BLUE_O);
+
+        System.out.print("Enter the board size (e.g., 5 for 5x5): ");
+        int boardSize = scanner.nextInt();
+
+        CaptureGoGame game = new CaptureGoGame(boardSize, player1, player2);
     }
 }
