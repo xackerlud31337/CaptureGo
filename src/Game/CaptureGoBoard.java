@@ -3,18 +3,19 @@ package Game;
 import java.util.Scanner;
 
 public class CaptureGoBoard {
-    private final int size; // Number of playable intersections
-    private Cell[][] grid;  // Full grid of Cell objects, including lines
+    private final int size;
+    private Cell[][] grid;
 
-    // Constructor
     public CaptureGoBoard(int size) {
-        this.size = size; // Number of playable intersections
+        this.size = size;
         initializeBoard();
     }
 
-    // Initialize the board
+    /**
+     * Initialize the board with empty cells.
+     */
     private void initializeBoard() {
-        grid = new Cell[size * 2 - 1][size * 2 - 1]; // Adjust for proper grid dimensions
+        grid = new Cell[size * 2 - 1][size * 2 - 1];
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid[i].length; j++) {
                 if (i % 2 == 0 && j % 2 == 0) {
@@ -26,10 +27,15 @@ public class CaptureGoBoard {
         }
     }
 
-    // Place a stone on the board
+    /**
+     * Place a stone on the board.
+     * @param row is the row where we want to place the stone
+     * @param col is the column where we want to place the stone
+     * @param player is the player who is placing the stone
+     */
     public void placeStone(int row, int col, Player player) {
-        int actualRow = row * 2; // Map row to grid coordinates
-        int actualCol = col * 2; // Map column to grid coordinates
+        int actualRow = row * 2;
+        int actualCol = col * 2;
         Cell cell = grid[actualRow][actualCol];
         if (cell == null || !cell.isEmpty()) {
             throw new IllegalStateException("Invalid move: Intersection already occupied!");
@@ -38,7 +44,7 @@ public class CaptureGoBoard {
         player.addCell(cell); // Add the cell to the player's occupied list
     }
 
-    // Render the board
+
     public void render() {
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid[i].length; j++) {
@@ -59,10 +65,10 @@ public class CaptureGoBoard {
     // Check if a move is valid
     public boolean isValidMove(int row, int col) {
         if (row < 0 || row >= size || col < 0 || col >= size) {
-            return false; // Input is outside playable grid
+            return false;
         }
-        int actualRow = row * 2; // Map row to grid coordinates
-        int actualCol = col * 2; // Map column to grid coordinates
+        int actualRow = row * 2;
+        int actualCol = col * 2;
         Cell cell = grid[actualRow][actualCol];
         return cell != null && cell.isEmpty();
     }
@@ -73,7 +79,7 @@ public class CaptureGoBoard {
         boolean isPlayer1Turn = true;
 
         while (true) {
-            render(); // Display the board
+            render();
             Player currentPlayer = isPlayer1Turn ? player1 : player2;
             System.out.println(currentPlayer.getName() + "'s turn (" + (isPlayer1Turn ? "White" : "Blue") + ").");
 
@@ -99,11 +105,11 @@ public class CaptureGoBoard {
     public static void main(String[] args) {
         CaptureGoBoard board = new CaptureGoBoard(5);
 
-        // Players
-        Player whitePlayer = new Player("Alice", Cell.WHITE_O); // White stones
-        Player bluePlayer = new Player("Bob", Cell.BLUE_O);     // Blue stones (black stones)
 
-        // Play the game
+        Player whitePlayer = new Player("Alice", Cell.WHITE_O);
+        Player bluePlayer = new Player("Bob", Cell.BLUE_O);
+
+
         board.playGame(whitePlayer, bluePlayer);
     }
 }
