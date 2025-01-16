@@ -1,6 +1,7 @@
 package Game;
 
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CaptureGoBoard {
     private final int size;
@@ -12,14 +13,14 @@ public class CaptureGoBoard {
     }
 
     /**
-     * Initialize the board with empty cells.;
+     * Initialize the board with empty cells.
      */
     private void initializeBoard() {
-        grid = new Cell[size * 2 - 1][size * 2 - 1];
+        grid = new Cell[size * 2 + 1][size * 2 + 1];
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid[i].length; j++) {
                 if (i % 2 == 0 && j % 2 == 0) {
-                    grid[i][j] = new Cell(); // Create a Cell for each intersection
+                    grid[i][j] = new Cell(i, j);
                 } else {
                     grid[i][j] = null; // Non-intersections are left as null
                 }
@@ -27,23 +28,20 @@ public class CaptureGoBoard {
         }
     }
 
-    /**
-     * Place a stone on the board.
-     * @param row is the row where we want to place the stone
-     * @param col is the column where we want to place the stone
-     * @param player is the player who is placing the stone
-     */
-    public void placeStone(int row, int col, Player player) {
-        int actualRow = row * 2;
-        int actualCol = col * 2;
-        Cell cell = grid[actualRow][actualCol];
-        if (cell == null || !cell.isEmpty()) {
-            throw new IllegalStateException("Invalid move: Intersection already occupied!");
+    public Cell[][] boardDeepCopy() {
+        Cell[][] boardCopy = new Cell[size * 2 + 1][size * 2 + 1];
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[i].length; j++) {
+                if (grid[i][j] != null) {
+                    boardCopy[i][j] = new Cell(i, j);
+                    boardCopy[i][j].setState(grid[i][j].getState());
+                } else {
+                    boardCopy[i][j] = null;
+                }
+            }
         }
-        cell.setState(player.getStone()); // Set the stone using the Player's stone type
-        player.addCell(cell); // Add the cell to the player's occupied list
+        return boardCopy;
     }
-
 
     public void render() {
         for (int i = 0; i < grid.length; i++) {
@@ -64,7 +62,7 @@ public class CaptureGoBoard {
 
     // Check if a move is valid
     public boolean isValidMove(int row, int col) {
-        if (row < 0 || row >= size || col < 0 || col >= size) {
+        if (row < 0 || row > size || col < 0 || col > size) {
             return false;
         }
         int actualRow = row * 2;
@@ -73,43 +71,50 @@ public class CaptureGoBoard {
         return cell != null && cell.isEmpty();
     }
 
-    // Playable game loop
-    public void playGame(Player player1, Player player2) {
-        Scanner scanner = new Scanner(System.in);
-        boolean isPlayer1Turn = true;
+    public List<Cell> getNeighbors(Cell cell) {
+        List<Cell> neighbors = new ArrayList<>();
+        int[][] directions = {{2, 0}, {-2, 0}, {0, 2}, {0, -2}}; // Move to adjacent intersections
 
-        while (true) {
-            render();
-            Player currentPlayer = isPlayer1Turn ? player1 : player2;
-            System.out.println(currentPlayer.getName() + "'s turn (" + (isPlayer1Turn ? "White" : "Blue") + ").");
+        for (int[] dir : directions) {
+            int newRow = cell.getRow() + dir[0];
+            int newCol = cell.getCol() + dir[1];
 
-            System.out.print("Enter row (0 to " + (size - 1) + ") or -1 to quit: ");
-            int row = scanner.nextInt();
-            if (row == -1) break;
-
-            System.out.print("Enter column (0 to " + (size - 1) + "): ");
-            int col = scanner.nextInt();
-
-            if (isValidMove(row, col)) {
-                placeStone(row, col, currentPlayer);
-                isPlayer1Turn = !isPlayer1Turn; // Switch turns
-            } else {
-                System.out.println("Invalid move. Make sure the row and column are within 0 to " + (size - 1) + " and the spot is not occupied.");
+            // Ensure the neighbor is within bounds and is a valid intersection
+            if (newRow >= 0 && newRow < grid.length && newCol >= 0 && newCol < grid[0].length) {
+                Cell neighbor = grid[newRow][newCol];
+                if (neighbor != null) { // Check for valid intersection
+                    neighbors.add(neighbor);
+                }
             }
         }
+        return neighbors;
+    }
 
-        System.out.println("Game over! Final board:");
-        render();
+    public void setCell(int row, int col, String state) {
+        int actualRow = row * 2;
+        int actualCol = col * 2;
+        grid[actualRow][actualCol].setState(state);
+    }
+
+    /**
+     * Retrieve a cell at the given row and column.
+     *
+     * @param row The logical row (not actual index) of the cell.
+     * @param col The logical column (not actual index) of the cell.
+     * @return The cell at the specified location.
+     */
+    public Cell getCell(int row, int col) {
+        int actualRow = row * 2;
+        int actualCol = col * 2;
+
+        if (actualRow < 0 || actualRow >= grid.length || actualCol < 0 || actualCol >= grid[0].length) {
+            throw new IllegalArgumentException("Invalid row or column: Out of bounds!");
+        }
+
+        return grid[actualRow][actualCol];
     }
 
     public static void main(String[] args) {
-        CaptureGoBoard board = new CaptureGoBoard(5);
-
-
-        Player whitePlayer = new Player("Alice", Cell.WHITE_O);
-        Player bluePlayer = new Player("Bob", Cell.BLUE_O);
-
-
-        board.playGame(whitePlayer, bluePlayer);
+        CaptureGoGame game = new CaptureGoGame(6, new Player("Alice", Cell.WHITE_O), new Player("Bob", Cell.BLUE_O));
     }
 }

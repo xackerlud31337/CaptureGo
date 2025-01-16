@@ -7,6 +7,7 @@ public class Player {
     private String name;
     private String stone;             // Stone representation (Cell.WHITE_O or Cell.BLUE_O);
     private List<Cell> occupiedCells;
+    private int capturedStones;
 
 
     public Player(String name, String stone) {
@@ -58,6 +59,33 @@ public class Player {
     public void resetOccupiedCells() {
         occupiedCells.clear();
     }
+
+    /**
+     * Remove a cell from the player's occupied cells list.
+     * @param cell the cell to remove
+     */
+    public void removeCell(Cell cell) {
+        if (cell != null) {
+            occupiedCells.remove(cell);
+        }
+    }
+
+    /**
+     * Add to the player's captured stones count.
+     * @param count the number of stones captured.
+     */
+    public void addCapturedStones(int count) {
+        this.capturedStones += count;
+    }
+
+    /**
+     * Get the number of stones captured by the player.
+     * @return the number of captured stones.
+     */
+    public int getCapturedStones() {
+        return capturedStones;
+    }
+
 
     @Override
     public String toString() {

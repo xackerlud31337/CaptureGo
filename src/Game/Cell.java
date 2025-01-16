@@ -6,10 +6,14 @@ public class Cell {
 
 
     private String state; // State of the cell: "+", WHITE_O, or BLUE_O
+    private final int row; // Row position of the cell
+    private final int column;
 
 
-    public Cell() {
-        this.state = "+"; // Default is an empty intersection
+    public Cell(int row, int column) {
+        this.state = "+";
+        this.row = row;
+        this.column = column;// Default is an empty intersection
     }
 
     /**
@@ -37,6 +41,22 @@ public class Cell {
      */
     public String getState() {
         return state;
+    }
+
+    /**
+     * Get the row position of the cell.
+     * @return the row position
+     */
+    public int getRow() {
+        return row;
+    }
+
+    /**
+     * Get the column position of the cell.
+     * @return the column position
+     */
+    public int getCol() {
+        return column;
     }
 
     /**
