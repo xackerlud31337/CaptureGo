@@ -28,6 +28,10 @@ public class CaptureGoBoard {
         }
     }
 
+    /**
+     * This is the method that will be used to create a deep copy of the board.
+     * @return a deep copy of the board
+     */
     public Cell[][] boardDeepCopy() {
         Cell[][] boardCopy = new Cell[size * 2 + 1][size * 2 + 1];
         for (int i = 0; i < grid.length; i++) {
@@ -43,6 +47,10 @@ public class CaptureGoBoard {
         return boardCopy;
     }
 
+    /**
+     * Get the size of the board.
+     * @return the size of the board
+     */
     public void render() {
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid[i].length; j++) {
@@ -60,7 +68,12 @@ public class CaptureGoBoard {
         }
     }
 
-    // Check if a move is valid
+    /**
+     * Check if the move is valid.
+     * @param row the row of the move
+     * @param col the column of the move
+     * @return true if the move is valid, false otherwise
+     */
     public boolean isValidMove(int row, int col) {
         if (row < 0 || row > size || col < 0 || col > size) {
             return false;
@@ -71,6 +84,11 @@ public class CaptureGoBoard {
         return cell != null && cell.isEmpty();
     }
 
+    /**
+     * Get the neighbors of a cell.
+     * @param cell the cell to get neighbors of
+     * @return the list of neighbors
+     */
     public List<Cell> getNeighbors(Cell cell) {
         List<Cell> neighbors = new ArrayList<>();
         int[][] directions = {{2, 0}, {-2, 0}, {0, 2}, {0, -2}}; // Move to adjacent intersections
@@ -90,6 +108,13 @@ public class CaptureGoBoard {
         return neighbors;
     }
 
+    /**
+     * Set the cell at the given row and column to the specified state.
+     *
+     * @param row   The logical row (not actual index) of the cell.
+     * @param col   The logical column (not actual index) of the cell.
+     * @param state The state to set the cell to.
+     */
     public void setCell(int row, int col, String state) {
         int actualRow = row * 2;
         int actualCol = col * 2;
