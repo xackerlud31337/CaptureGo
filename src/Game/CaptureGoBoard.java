@@ -12,7 +12,7 @@ public class CaptureGoBoard {
     }
 
     /**
-     * Initialize the board with empty cells.
+     * Initialize the board with empty cells.;
      */
     private void initializeBoard() {
         grid = new Cell[size * 2 - 1][size * 2 - 1];

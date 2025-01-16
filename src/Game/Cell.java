@@ -14,7 +14,7 @@ public class Cell {
 
     /**
      * Check if the cell is empty.
-     * @return true if the cell is empty, false otherwise
+     * @return true if the cell is empty, false otherwise;
      */
     public boolean isEmpty() {
         return state.equals("+");

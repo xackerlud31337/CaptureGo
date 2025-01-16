@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Player {
     private String name;
-    private String stone;             // Stone representation (Cell.WHITE_O or Cell.BLUE_O)
+    private String stone;             // Stone representation (Cell.WHITE_O or Cell.BLUE_O);
     private List<Cell> occupiedCells;
 
 
