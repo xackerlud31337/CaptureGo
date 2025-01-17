@@ -1,5 +1,6 @@
 package Game;
 
+import Players.GoAI;
 import java.util.*;
 import Players.NaiveAI;
 
@@ -10,14 +11,17 @@ public class CaptureGoGame {
     private boolean isPlayer1turn;
     private Cell[][] boardCopy;
     private final int size;
+    private final int captureGoal;
+    private boolean gameOver;
 
-    public CaptureGoGame(int size, Player player1, Player player2) {
+    public CaptureGoGame(int size, Player player1, Player player2, int captureGo) {
         this.board = new CaptureGoBoard(size);
         this.size = size;
         this.player1 = player1;
         this.player2 = player2;
         this.isPlayer1turn = true;
-        playGame(player1, player2);
+        this.captureGoal = captureGo;
+        this.gameOver = false;
     }
 
     /**
@@ -213,9 +217,9 @@ public class CaptureGoGame {
             System.out.println(currentPlayer.getName() + "'s turn (" + (isPlayer1Turn ? "White" : "Blue") + ").");
 
             int row, col;
-            if (currentPlayer instanceof NaiveAI) {
+            if (currentPlayer instanceof GoAI) {
                 // Let the AI choose a move
-                Cell move = ((NaiveAI) currentPlayer).chooseMove(board);
+                Cell move = ((GoAI) currentPlayer).chooseMove(board);
                 if (move == null) {
                     System.out.println("No valid moves available. Game over!");
                     break;
@@ -253,7 +257,7 @@ public class CaptureGoGame {
      * If a player has captured the required number of stones, they are declared the winner.
      * @return the winning player, or null if there is no winner yet.
      */
-    private Player checkWinner(int captureGoal) {
+    private Player checkWinner() {
         if (player1.getCapturedStones() >= captureGoal) {
             return player1;
         } else if (player2.getCapturedStones() >= captureGoal) {
