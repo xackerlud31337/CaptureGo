@@ -118,9 +118,10 @@ public class CaptureGoGame {
         }
 
         // Check for winner
-        Player winner = checkWinner(captureGoal);
+        Player winner = checkWinner();
         if (winner != null) {
             System.out.println("The winner is " + winner.getName() + "!");
+            gameOver = true;
             return; // Exit the method gracefully
         }
 
@@ -206,7 +207,7 @@ public class CaptureGoGame {
         Scanner scanner = new Scanner(System.in);
         boolean isPlayer1Turn = true;
 
-        while (true) {
+        while (!gameOver) {
             board.render();
             Player currentPlayer = isPlayer1Turn ? player1 : player2;
             System.out.println(currentPlayer.getName() + "'s turn (" + (isPlayer1Turn ? "White" : "Blue") + ").");
@@ -250,7 +251,6 @@ public class CaptureGoGame {
     /**
      * Checks if there is a winner based on the capture-based victory condition.
      * If a player has captured the required number of stones, they are declared the winner.
-     * @param captureGoal the number of stones required to win.
      * @return the winning player, or null if there is no winner yet.
      */
     private Player checkWinner(int captureGoal) {
