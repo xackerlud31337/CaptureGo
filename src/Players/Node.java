@@ -2,19 +2,33 @@ package Players;
 
 import Game.CaptureGoBoard;
 import Game.Cell;
+
 import java.util.*;
 
 public class Node {
     private final Cell[][] boardState;
     private final Node parent;
-    private final String currentStone;    // which stone is about to move
-    private final Cell moveMade;          // move that led to this node
-    private int whiteCaptured;            // how many stones white has captured so far
-    private int blueCaptured;             // how many stones blue has captured so far
+    private final String currentStone; // which stone is about to move
+    private final Cell moveMade;       // move that led to this node
+
+    private int whiteCaptured; // how many stones white has captured so far
+    private int blueCaptured;  // how many stones blue has captured so far
 
     private final List<Node> children = new ArrayList<>();
     private double wins = 0.0;
     private int visits = 0;
+
+    /**
+     * A single prior for this node (optional).
+     * Typically, this represents the prior for the move that *created* this node.
+     */
+    private double prior = 0.0;
+
+    /**
+     * A map of potential moves -> prior (optional).
+     * Can be useful at the root (or any node) to store priors for *all* unexpanded moves.
+     */
+    private final Map<Cell, Double> movePriors = new HashMap<>();
 
     public Node(Cell[][] boardState,
                 Node parent,
@@ -51,6 +65,14 @@ public class Node {
         return moves;
     }
 
+    /**
+     * The game should end if there are no legal moves left or if either player has captured *10* stones.
+     * The 10 stones capture goal is hard coded for now.
+     */
+    public boolean isTerminal() {
+        return getLegalMoves().isEmpty() || whiteCaptured >= 10 || blueCaptured >= 10;
+    }
+
     // ----------------------------------------------------------
     // 2) Create a child node by making the given 'move'
     // ----------------------------------------------------------
@@ -68,7 +90,7 @@ public class Node {
         int newWhiteCaptured = whiteCaptured;
         int newBlueCaptured  = blueCaptured;
 
-        // Convert that 2D array into a CaptureGoBoard so we can do BFS
+        // Convert that 2D array into a CaptureGoBoard so we can do BFS/captures
         int size = (newState.length - 1) / 2;
         CaptureGoBoard tempBoard = new CaptureGoBoard(size);
         applyArrayStateToBoard(newState, tempBoard);
@@ -102,6 +124,7 @@ public class Node {
         // Create the new node; next turn is the flipped color
         String nextStone = flipStone(currentStone);
         Node child = new Node(newState, this, nextStone, move, newWhiteCaptured, newBlueCaptured);
+
         return child;
     }
 
@@ -202,16 +225,16 @@ public class Node {
         return parent;
     }
 
+    public Cell getMove() {
+        return moveMade;
+    }
+
     public void addChild(Node child) {
         children.add(child);
     }
 
     public List<Node> getChildren() {
         return children;
-    }
-
-    public Cell getMoveMade() {
-        return moveMade;
     }
 
     public String getCurrentStone() {
@@ -242,6 +265,35 @@ public class Node {
         this.visits++;
     }
 
+    public Cell[][] getState() {
+        return boardState;
+    }
+
+    // ----------------------------------------------------------
+    // 8) "Prior" for the move that produced this node
+    // ----------------------------------------------------------
+    public double getPrior() {
+        return prior;
+    }
+
+    public void setPrior(double prior) {
+        this.prior = prior;
+    }
+
+    // ----------------------------------------------------------
+    // 9) Store or retrieve priors for *unexpanded* moves
+    // ----------------------------------------------------------
+    public void setMovePrior(Cell move, double priorValue) {
+        movePriors.put(move, priorValue);
+    }
+
+    public double getMovePrior(Cell move) {
+        return movePriors.getOrDefault(move, 0.0);
+    }
+
+    // ----------------------------------------------------------
+    // Flip a stone’s color
+    // ----------------------------------------------------------
     private String flipStone(String stone) {
         return stone.equals(Cell.WHITE_O) ? Cell.BLUE_O : Cell.WHITE_O;
     }

@@ -2,16 +2,25 @@ package Players;
 
 import Game.CaptureGoBoard;
 import Game.Cell;
+
 import java.util.*;
 
 public class MonteCarloTreeSearch {
     private static final Random RAND = new Random();
-    private static final int MAX_DEPTH = 60; // or so, to prevent endless loops in large boards
 
-    private int captureGoal = 5; // example
-    private double captureWeight = 15.0;
-    private double libertyWeight = 2.0;
+    // -----------------------------
+    // CONFIGURABLE CONSTANTS
+    // -----------------------------
+
+    private int captureGoal = 10;
+    private double captureWeight = 10.0;
+    private double libertyWeight = 5.0;
     private double selfCapturePenalty = -200.0;
+
+    private static final int MAX_DEPTH = 60;
+    private double explorationConstant = 1.4;
+    private double priorWeight = 0.1;
+    private boolean useProgressiveWidening = true;
 
     public Node runMCTS(Node root, int simulations) {
         List<Cell> rootMoves = root.getLegalMoves();
@@ -19,26 +28,26 @@ public class MonteCarloTreeSearch {
             return null;
         }
 
+        initializeChildrenPriors(root, rootMoves);
+
+        // Main MCTS loop
         for (int i = 0; i < simulations; i++) {
-            // 1. Selection
+            // 1. Selection (including partial expansions if we’re using them)
             Node selected = select(root);
 
             // 2. Expansion
-            if (selected.getVisits() > 0) {
-                List<Cell> moves = selected.getLegalMoves();
-                if (!moves.isEmpty()) {
-                    Node child = expand(selected, moves);
-                    selected = child;
-                }
+            if (!selected.isTerminal()) {
+                selected = expandIfPossible(selected);
             }
 
-            // 3. Simulation
+            // 3. Simulation (rollout)
             double result = simulate(selected);
 
             // 4. Backpropagation
             backpropagate(selected, result);
         }
 
+        // Pick the child with the highest visit count (or highest average Q, up to you)
         Node bestChild = null;
         double bestVisits = -1;
 
@@ -52,12 +61,17 @@ public class MonteCarloTreeSearch {
         return bestChild;
     }
 
+    // -------------------------------------------------------------
+    // SELECTION: navigate down the tree until a leaf/unexpanded node
+    // -------------------------------------------------------------
     private Node select(Node node) {
         Node current = node;
-        while (!current.getChildren().isEmpty()) {
+
+        while (!current.getChildren().isEmpty() && !current.isTerminal()) {
             Node best = null;
             double bestUCT = Double.NEGATIVE_INFINITY;
 
+            // Standard loop to find the child with the best UCT (with our new prior-bias)
             for (Node child : current.getChildren()) {
                 double uct = uctValue(child, current.getVisits());
                 if (uct > bestUCT) {
@@ -65,31 +79,168 @@ public class MonteCarloTreeSearch {
                     best = child;
                 }
             }
+
             if (best == null) {
                 break;
             }
             current = best;
         }
+
         return current;
     }
 
+    /**
+     * Modified UCT formula that includes a small "prior" term.
+     *
+     * Q = average outcome for the child
+     * P = prior for the child (based on evaluateMove)
+     * c = exploration constant (explorationConstant)
+     * alpha = priorWeight
+     *
+     * If child has never been visited, we return MAX_VALUE to force exploration.
+     */
     private double uctValue(Node child, int parentVisits) {
         double w = child.getWins();
         double n = child.getVisits();
+
+        // If unvisited, explore
         if (n == 0) {
             return Double.MAX_VALUE;
         }
-        double exploration = Math.sqrt(2 * Math.log(parentVisits) / n);
-        return (w / n) + exploration;
+
+        // Exploitation
+        double exploitation = w / n;
+
+        // Exploration
+        double exploration = explorationConstant * Math.sqrt(Math.log(parentVisits) / n);
+
+        // Progressive bias: incorporate child’s prior
+        // child.getPrior() must be stored in your Node class (see expansions).
+        double bias = priorWeight * child.getPrior() / (1.0 + n);
+
+        return exploitation + exploration + bias;
     }
 
+    // -----------------------------------------------
+    // EXPANSION: Add new child if we have unexpanded moves
+    // -----------------------------------------------
+    private Node expandIfPossible(Node selected) {
+        List<Cell> moves = selected.getLegalMoves();
+        if (moves.isEmpty()) {
+            // No moves to expand
+            return selected;
+        }
+
+        // Optional: Progressive Widening
+        if (useProgressiveWidening) {
+            int expandedChildren = selected.getChildren().size();
+            int maxChildren = maxChildrenToExpand(selected);
+
+            if (expandedChildren < moves.size() && expandedChildren < maxChildren) {
+                // Expand a new child
+                return expand(selected, moves);
+            } else {
+                // Return the same node if we don't expand
+                return selected;
+            }
+
+        } else {
+            // If not using progressive widening, always expand one child if possible.
+            // (But only if this node has been visited at least once—common check.)
+            if (selected.getVisits() > 0 && selected.getChildren().size() < moves.size()) {
+                return expand(selected, moves);
+            }
+            return selected;
+        }
+    }
+
+    /**
+     * For progressive widening.
+     * Example: we allow up to floor(sqrt(visits)) children expansions.
+     */
+    private int maxChildrenToExpand(Node node) {
+        return 1 + (int) Math.sqrt(node.getVisits());
+    }
+
+    /**
+     * Actually create a child node with a chosen move from the unexpanded set.
+     */
     private Node expand(Node node, List<Cell> moves) {
-        Cell bestMove = selectBestMove(node.toCaptureGoBoard(), moves, node.getCurrentStone());
+        // Filter out moves that have already been expanded.
+        Set<Cell> expandedMoves = new HashSet<>();
+        for (Node ch : node.getChildren()) {
+            expandedMoves.add(ch.getMove());
+        }
+
+        // Get a list of unexpanded moves
+        List<Cell> unexpanded = new ArrayList<>();
+        for (Cell m : moves) {
+            if (!expandedMoves.contains(m)) {
+                unexpanded.add(m);
+            }
+        }
+
+        // If everything is expanded, just return node (should rarely happen)
+        if (unexpanded.isEmpty()) {
+            return node;
+        }
+
+        // We pick exactly one move to expand now.
+        // Let's pick based on the highest prior from evaluateMove, or do a random approach.
+        Cell bestMove = pickMoveByPrior(node, unexpanded);
+
+        // Create a child node
         Node child = node.createChildNode(bestMove);
         node.addChild(child);
+
+        // We recalculate or store the prior for that child
+        double priorVal = evaluateMove(node.toCaptureGoBoard(), bestMove, node.getCurrentStone());
+        child.setPrior(priorVal);
+
         return child;
     }
 
+    /**
+     * Optionally pick the unexpanded move with the highest prior (rather than random).
+     * This helps a bit with guiding expansions toward seemingly strong moves.
+     */
+    private Cell pickMoveByPrior(Node node, List<Cell> unexpanded) {
+        CaptureGoBoard boardCopy = node.toCaptureGoBoard();
+        String stone = node.getCurrentStone();
+
+        Cell bestCell = null;
+        double bestScore = Double.NEGATIVE_INFINITY;
+        for (Cell move : unexpanded) {
+            double score = evaluateMove(boardCopy, move, stone);
+            if (score > bestScore) {
+                bestScore = score;
+                bestCell = move;
+            }
+        }
+
+        return bestCell;
+    }
+
+    /**
+     * Initialize children’s prior at the root node.
+     * This is handy so the root's moves have a prior from the start.
+     * (We don’t always need to do this at *every* node if your expand() step sets prior.)
+     */
+    private void initializeChildrenPriors(Node root, List<Cell> moves) {
+        for (Cell move : moves) {
+            // Create a "fake" prior so we store it in the Node for later reference
+            double p = evaluateMove(root.toCaptureGoBoard(), move, root.getCurrentStone());
+
+            // If the root node hasn’t actually created the child object yet,
+            // we can store the prior in some local map or wait until expansion time.
+            // For demonstration, let's store it in root for easy reference:
+            root.setMovePrior(move, p);
+        }
+    }
+
+    // -----------------------------------------------
+    // SIMULATION: A (mostly) random or heuristic-based playout
+    // -----------------------------------------------
     private double simulate(Node node) {
         CaptureGoBoard simBoard = node.toCaptureGoBoard();
         int size = simBoard.getSize();
@@ -104,17 +255,19 @@ public class MonteCarloTreeSearch {
             depth++;
 
             if (whiteCaptured >= captureGoal) {
-                return (stoneToMove.equals(Cell.WHITE_O)) ? 1.0 : 0.0;
+                return stoneToMove.equals(Cell.WHITE_O) ? 1.0 : 0.0;
             }
             if (blueCaptured >= captureGoal) {
-                return (stoneToMove.equals(Cell.BLUE_O)) ? 1.0 : 0.0;
+                return stoneToMove.equals(Cell.BLUE_O) ? 1.0 : 0.0;
             }
 
             List<Cell> possible = validMoves(simBoard);
             if (possible.isEmpty()) {
+                // No moves left, treat as draw
                 return 0.5;
             }
 
+            // Weighted pick among possible moves
             Cell move = selectBestMove(simBoard, possible, stoneToMove);
             int logicalRow = move.getRow() / 2;
             int logicalCol = move.getCol() / 2;
@@ -131,9 +284,13 @@ public class MonteCarloTreeSearch {
             stoneToMove = flipStone(stoneToMove);
         }
 
+        // If we exit the loop, treat it as a draw
         return 0.5;
     }
 
+    // -----------------------------------------------
+    // BACKPROPAGATION: Update stats along the path
+    // -----------------------------------------------
     private void backpropagate(Node node, double result) {
         Node current = node;
         while (current != null) {
@@ -142,6 +299,10 @@ public class MonteCarloTreeSearch {
             current = current.getParent();
         }
     }
+
+    // ------------------------------------------------------------------
+    // HELPER METHODS (mostly the same, with minor refinements)
+    // ------------------------------------------------------------------
 
     private List<Cell> validMoves(CaptureGoBoard simBoard) {
         List<Cell> moves = new ArrayList<>();
@@ -156,20 +317,81 @@ public class MonteCarloTreeSearch {
         return moves;
     }
 
+    /**
+     * Weighted random selection among possible moves using an exponential of the move score.
+     * This effectively implements a "softmax" over your evaluateMove heuristic.
+     */
+    private Cell selectBestMove(CaptureGoBoard board, List<Cell> moves, String stone) {
+        Map<Cell, Double> moveScores = new HashMap<>();
+        double totalScore = 0.0;
+
+        for (Cell move : moves) {
+            double score = evaluateMove(board, move, stone);
+            moveScores.put(move, score);
+            totalScore += Math.exp(score);
+        }
+
+        double randomValue = RAND.nextDouble() * totalScore;
+        double cumulativeScore = 0.0;
+
+        for (Map.Entry<Cell, Double> entry : moveScores.entrySet()) {
+            cumulativeScore += Math.exp(entry.getValue());
+            if (cumulativeScore >= randomValue) {
+                return entry.getKey();
+            }
+        }
+
+        // Fallback (should never happen theoretically)
+        return moves.get(RAND.nextInt(moves.size()));
+    }
+
+    /**
+     * Evaluate a move heuristically.
+     * Adjust these scoring factors to see how they affect AI strength.
+     */
+    private double evaluateMove(CaptureGoBoard board, Cell move, String stone) {
+        double score = 0.0;
+        int row = move.getRow() / 2;
+        int col = move.getCol() / 2;
+
+        // We'll copy the board to test hypothetical captures, suicides, etc.
+        CaptureGoBoard tempBoard = new CaptureGoBoard(board.getSize());
+        copyBoard(board, tempBoard);
+
+        // Place the stone
+        tempBoard.setCell(row, col, stone);
+
+        // 1) Immediate captures this move would produce
+        int capturesNow = applyCaptures(tempBoard, stone, row, col);
+        score += captureWeight * capturesNow;
+
+        // 2) Check if it’s a suicide move (no liberties for newly placed group)
+        int selfCaptured = simulateSelfCapture(tempBoard, move, stone);
+        if (selfCaptured > 0) {
+            score += selfCapturePenalty * selfCaptured; // large negative
+        }
+
+        // 3) Count local liberties. More local liberties = safer move
+        int localLiberties = countLiberties(tempBoard, row, col, stone);
+        score += libertyWeight * localLiberties;
+
+        // Additional domain-specific heuristics can go here:
+        // - Influence
+        // - Distance to edges
+        // - Patterns, etc.
+
+        return score;
+    }
+
     private int applyCaptures(CaptureGoBoard board, String placedStone, int row, int col) {
         String opponentStone = placedStone.equals(Cell.WHITE_O) ? Cell.BLUE_O : Cell.WHITE_O;
         int capturedStones = 0;
 
         List<Cell> neighbors = board.getNeighbors(board.getCell(row, col));
         for (Cell neighbor : neighbors) {
-            // Make sure neighbor is still the opponent's stone
             if (neighbor != null && neighbor.getState().equals(opponentStone)) {
-                // BFS/DFS to get the entire group
                 Set<Cell> group = findGroup(board, neighbor, opponentStone);
-
-                // Check if group has liberties
                 if (!hasLiberty(board, group)) {
-                    // Capture them
                     for (Cell captured : group) {
                         captured.setState(placedStone);
                     }
@@ -209,117 +431,37 @@ public class MonteCarloTreeSearch {
         return false;
     }
 
-    private String flipStone(String stone) {
-        return stone.equals(Cell.WHITE_O) ? Cell.BLUE_O : Cell.WHITE_O;
-    }
-
-    private Cell selectBestMove(CaptureGoBoard board, List<Cell> moves, String stone) {
-        Map<Cell, Double> moveScores = new HashMap<>();
-        double totalScore = 0.0;
-
-        for (Cell move : moves) {
-            double score = evaluateMove(board, move, stone);
-            moveScores.put(move, score);
-            totalScore += Math.exp(score);
-        }
-
-        double randomValue = RAND.nextDouble() * totalScore;
-        double cumulativeScore = 0.0;
-
-        for (Map.Entry<Cell, Double> entry : moveScores.entrySet()) {
-            cumulativeScore += Math.exp(entry.getValue());
-            if (cumulativeScore >= randomValue) {
-                return entry.getKey();
-            }
-        }
-
-        return moves.get(RAND.nextInt(moves.size()));
-    }
-
-    private double evaluateMove(CaptureGoBoard board, Cell move, String stone) {
-        double score = 0.0;
-        int row = move.getRow() / 2;
-        int col = move.getCol() / 2;
-
-        // Example tweak:
-        // Instead of always awarding +15 for having an opponent neighbor,
-        // only give a bigger bonus if that neighbor can be captured.
-
-        // 1) Check neighbors
-        List<Cell> neighbors = board.getNeighbors(board.getCell(row, col));
-        for (Cell neighbor : neighbors) {
-            if (neighbor.getState().equals(flipStone(stone))) {
-                // see if placing a stone here *would* actually capture that neighbor’s group
-                // or at least put it in atari. For now, we just keep it simple:
-                score += 8.0;
-            } else if (neighbor.isEmpty()) {
-                score += 2.0;
-            }
-        }
-
-        // 2) Avoid suicides (self-capturing)
-        int capturedByOpponent = simulateSelfCapture(board, move, stone);
-        if (capturedByOpponent > 0) {
-            score -= 100.0;
-        }
-
-        return score;
-    }
-
     /**
-     * Checks if placing 'stone' at 'move' on the given 'board' results in
-     * immediately capturing the newly placed stone's group (i.e. a "suicide move").
-     *
-     * @param board the current board (we will make a copy inside).
-     * @param move  the cell where we attempt to place our stone.
-     * @param stone the color of the stone being placed.
-     * @return the number of stones self-captured if this move kills its own group, or 0 otherwise.
+     * Returns how many stones you lose by placing your stone on 'move'
+     * (i.e., suicide move).
      */
     private int simulateSelfCapture(CaptureGoBoard board, Cell move, String stone) {
-        // 1) Make a temporary copy of the board, so we don't modify the real one
-        int size = board.getSize();
-        CaptureGoBoard tempBoard = new CaptureGoBoard(size);
+        int r = move.getRow() / 2;
+        int c = move.getCol() / 2;
+        Cell placedCell = board.getCell(r, c);
 
-        // Copy all cells from 'board' into 'tempBoard'
-        copyBoard(board, tempBoard);
-
-        // 2) Place the stone on the tempBoard
-        int logicalRow = move.getRow() / 2;
-        int logicalCol = move.getCol() / 2;
-        tempBoard.setCell(logicalRow, logicalCol, stone);
-
-        // 3) Gather the newly placed stone's group
-        Cell placedCell = tempBoard.getCell(logicalRow, logicalCol);
-        Set<Cell> group = findGroup(tempBoard, placedCell, stone);
-
-        // 4) Check if this group has any liberties
-        boolean hasLiberty = hasLiberty(tempBoard, group);
+        Set<Cell> group = findGroup(board, placedCell, stone);
+        boolean hasLiberty = hasLiberty(board, group);
         if (!hasLiberty) {
-            // No liberty → it's a self-capture (suicide)
-            // Return how many stones in that group get removed
+            // entire group is captured
             return group.size();
         }
         return 0;
     }
 
-    /**
-     * Copy all intersection states from 'source' into 'destination'.
-     */
     private void copyBoard(CaptureGoBoard source, CaptureGoBoard destination) {
         int size = source.getSize();
         for (int r = 0; r <= size; r++) {
             for (int c = 0; c <= size; c++) {
-                // Get the current state on the source board
                 String state = source.getCell(r, c).getState();
-                // Set the same state on the destination board
                 destination.setCell(r, c, state);
             }
         }
     }
 
-
-
     private int countLiberties(CaptureGoBoard board, int row, int col, String stone) {
+        // Simple local liberty count:
+        // Just count how many neighbor cells are empty
         int liberties = 0;
         List<Cell> neighbors = board.getNeighbors(board.getCell(row, col));
         for (Cell neighbor : neighbors) {
@@ -328,5 +470,9 @@ public class MonteCarloTreeSearch {
             }
         }
         return liberties;
+    }
+
+    private String flipStone(String stone) {
+        return stone.equals(Cell.WHITE_O) ? Cell.BLUE_O : Cell.WHITE_O;
     }
 }
