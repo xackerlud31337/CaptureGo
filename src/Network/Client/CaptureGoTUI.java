@@ -28,6 +28,8 @@ public class CaptureGoTUI {
             String aiChoice = scanner.nextLine().trim().toLowerCase();
             if (aiChoice.equals("safe")) {
                 player1 = new SafeAI(player1Name, Cell.WHITE_O);
+            } else if (aiChoice.equals("opa")) {
+                player1 = new ComplexAI(player1Name, Cell.WHITE_O, 2000, 1.4);
             } else {
                 // Default/fallback to naive if user typed something else
                 player1 = new NaiveAI(player1Name, Cell.WHITE_O);
@@ -52,7 +54,7 @@ public class CaptureGoTUI {
             if (aiChoice.equals("safe")) {
                 player2 = new SafeAI(player2Name, Cell.BLUE_O);
             } else if (aiChoice.equals("opa")) {
-                player2 = new ComplexAI(player1Name, Cell.BLUE_O, 500, 1.4);
+                player2 = new ComplexAI(player2Name, Cell.BLUE_O, 2000, 1.4);
             } else {
                 // Default/fallback to naive if user typed something else
                 player2 = new NaiveAI(player2Name, Cell.BLUE_O);

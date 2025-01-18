@@ -118,9 +118,11 @@ public class CaptureGoGame {
         Player opponent = (currentPlayer == player1) ? player2 : player1;
         List<Cell> opponentStones = new ArrayList<>(opponent.getOccupiedCells());
         for (Cell opponentStone : opponentStones) {
-            captureStones(opponentStone, opponent);
+            // Only attempt to capture if it's still actually the opponent’s stone
+            if (opponentStone.getState().equals(opponent.getStone())) {
+                captureStones(opponentStone, opponent);
+            }
         }
-
         // Check for winner
         Player winner = checkWinner();
         if (winner != null) {
@@ -201,7 +203,7 @@ public class CaptureGoGame {
         }
 
         // Place the stone on the board
-        makeMove(row, col, player, 10);
+        makeMove(row, col, player, captureGoal);
 
         // Add the cell to the player's occupied cells list
         player.addCell(boardCopy[actualRow][actualCol]);
