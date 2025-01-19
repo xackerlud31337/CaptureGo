@@ -17,6 +17,9 @@ public class MonteCarloTreeSearch {
     private double libertyWeight = 5.0;
     private double selfCapturePenalty = -200.0;
 
+    // -----------------------------
+    // MCTS PARAMETERS, be careful!
+    // -----------------------------
     private static final int MAX_DEPTH = 60;
     private double explorationConstant = 1.4;
     private double priorWeight = 0.1;
