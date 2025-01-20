@@ -16,11 +16,6 @@ public final class Protocol {
     public static final String GAMEOVER = "GAMEOVER";
     public static final String ERROR = "ERROR";
 
-    // Error descriptions
-    public static final String ERROR_ILLEGAL_MOVE = "Illegal move";
-    public static final String ERROR_ALREADY_LOGGED_IN = "Already logged in";
-    public static final String ERROR_UNKNOWN = "Unknown error";
-
     // Delimiter for separating arguments
     public static final String DELIMITER = "~";
 

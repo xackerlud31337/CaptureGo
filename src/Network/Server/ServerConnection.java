@@ -36,7 +36,7 @@ public class ServerConnection extends SocketConnection {
                 sendMessage(Protocol.formatHello("Welcome from the Capture Go Game server!\nPlease enter your username following the format \"LOGIN~<username>\"."));
             }
         } else if (message.startsWith(Protocol.LOGIN)) {
-            // We don't check if the player is already in a game, and they send LOGIN again
+            // We don't check if the player is already in a game, and they send LOGIN again, return ALREADYLOGGEDIN
             if (loggedIn || server.getClients().stream().anyMatch(client -> client.getUsername().equals(message.split(Protocol.DELIMITER)[1]))){
                 sendMessage(Protocol.ALREADYLOGGEDIN);
             }else{

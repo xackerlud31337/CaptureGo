@@ -12,7 +12,6 @@ public class ServerImp extends SocketServer {
     private Queue<ClientHandler> playersQueue = new LinkedList<>();
     private HashMap<ClientHandler, ClientHandler> playersInGame = new HashMap<>();
     private final Map<ClientHandler, GameSession> gameSessions = new HashMap<>();
-    private Thread gameThread;
 
     public ServerImp(int port) throws IOException {
         super(port);
@@ -175,6 +174,7 @@ public class ServerImp extends SocketServer {
         player1.getConnection().sendMessage(Protocol.formatNewGame(player1.getUsername(), player2.getUsername()));
         player2.getConnection().sendMessage(Protocol.formatNewGame(player1.getUsername(), player2.getUsername()));
 
+        //Change this to change the game
         GameSession newGameSession = new GameSession(player1, player2, 7, 10);
         gameSessions.put(player1, newGameSession);
         gameSessions.put(player2, newGameSession);
@@ -198,7 +198,7 @@ public class ServerImp extends SocketServer {
             gameSessions.remove(clientHandler);
             gameSessions.remove(opponent);
 
-            opponent.getConnection().sendMessage(Protocol.formatGameOver("Opponent disconnected", opponent.getUsername()));
+            opponent.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_DISCONNECT, opponent.getUsername()));
         }
     }
     /**

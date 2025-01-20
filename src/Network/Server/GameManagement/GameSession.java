@@ -181,17 +181,13 @@ public class GameSession {
         ClientHandler winner = checkWinner();
         //This should be added to the original logic of the game.
         if (board.isFull()){
-            System.out.println("The board is full! The game is a draw.");
+            //System.out.println("The board is full! The game is a draw.");
             gameOver = true;
-            player1.getConnection().sendMessage(Protocol.formatGameOver("Draw", "none"));
+            player1.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_DRAW, ""));
         }else if (winner != null) {
-            System.out.println("The winner is " + winner.getName() + "!");
-            winner.getConnection().sendMessage(Protocol.formatGameOver("Win", winner.getUsername()));
-            if (winner == player1) {
-                player2.getConnection().sendMessage(Protocol.formatGameOver("Lose", winner.getUsername()));
-            } else {
-                player1.getConnection().sendMessage(Protocol.formatGameOver("Lose", winner.getUsername()));
-            }
+            //System.out.println("The winner is " + winner.getName() + "!");
+            player1.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_VICTORY, winner.getUsername()));
+            player2.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_VICTORY, winner.getUsername()));
             gameOver = true;
         }
     }
