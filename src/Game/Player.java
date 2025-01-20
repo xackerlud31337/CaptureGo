@@ -12,9 +12,6 @@ public class Player {
 
     public Player(String name, String stone) {
         this.name = name;
-        if (!stone.equals(Cell.WHITE_O) && !stone.equals(Cell.BLUE_O)) {
-            throw new IllegalArgumentException("Invalid stone type! Use Cell.WHITE_O or Cell.BLUE_O.");
-        }
         this.stone = stone;
         this.occupiedCells = new ArrayList<>();
     }
@@ -33,6 +30,14 @@ public class Player {
      */
     public String getStone() {
         return stone;
+    }
+
+    /**
+     * Set the stone of the player.
+     * @param stone the stone to set
+     */
+    public void setStone(String stone) {
+        this.stone = stone;
     }
 
     /**
@@ -86,6 +91,9 @@ public class Player {
         return capturedStones;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
     @Override
     public String toString() {

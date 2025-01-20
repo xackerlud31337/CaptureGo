@@ -1,6 +1,7 @@
 package Network.Server;
 
 import Network.Server.Base.SocketServer;
+import Network.Server.GameManagement.GameSession;
 import Network.Server.Protocol.Protocol;
 import java.io.IOException;
 import java.net.Socket;
@@ -10,6 +11,8 @@ public class ServerImp extends SocketServer {
     private Set<ClientHandler> clients = new HashSet<>();
     private Queue<ClientHandler> playersQueue = new LinkedList<>();
     private HashMap<ClientHandler, ClientHandler> playersInGame = new HashMap<>();
+    private final Map<ClientHandler, GameSession> gameSessions = new HashMap<>();
+    private Thread gameThread;
 
     public ServerImp(int port) throws IOException {
         super(port);
@@ -101,6 +104,30 @@ public class ServerImp extends SocketServer {
         emptyServerListener.setDaemon(true);
         emptyServerListener.start();
     }
+
+    /**
+     * Starts a thread that checks if there are enough players to start a game every second.
+     */
+    public void waitForPlayersAndStartGame() {
+        Thread gameStarterThread = new Thread(() -> {
+            while (true) {
+                synchronized (this) {
+                    if (playersQueue.size() >= 2) {
+                        startGame();
+                    }
+                }
+                try {
+                    Thread.sleep(1000); // Check every second
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        });
+        gameStarterThread.setDaemon(true);
+        gameStarterThread.start();
+    }
+
     /**
      * Returns the queue of players waiting to play.
      * @return the queue of players waiting to play.
@@ -133,38 +160,54 @@ public class ServerImp extends SocketServer {
     /**
      * Starts a game with the first two players in the queue.
      */
-    public void startGame(){
+    public void startGame() {
         if (playersQueue.size() < 2) {
             System.out.println("Not enough players to start a game.");
             return;
         }
-        //Some dummy code to show the game has started
+
         System.out.println("Game has started!");
         ClientHandler player1 = playersQueue.poll();
         ClientHandler player2 = playersQueue.poll();
         assert player1 != null;
         assert player2 != null;
+
         player1.getConnection().sendMessage(Protocol.formatNewGame(player1.getUsername(), player2.getUsername()));
         player2.getConnection().sendMessage(Protocol.formatNewGame(player1.getUsername(), player2.getUsername()));
+
+        GameSession newGameSession = new GameSession(player1, player2, 7, 10);
+        gameSessions.put(player1, newGameSession);
+        gameSessions.put(player2, newGameSession);
         playersInGame.put(player1, player2);
+
+        Thread gameThread = new Thread(newGameSession::playGame);
+        gameThread.start();
     }
 
+    /**
+     * Ends the game when a player disconnects.
+     * @param clientHandler the player that disconnected
+     */
     public void endGameDisconnected(ClientHandler clientHandler) {
-        if (playersInGame.containsKey(clientHandler)) {
-            ClientHandler opponent = playersInGame.get(clientHandler);
-            playersInGame.remove(clientHandler);
-            playersInGame.remove(opponent);
+        GameSession gameSession = gameSessions.get(clientHandler);
+        if (gameSession != null) {
+            ClientHandler opponent = (gameSession.getPlayer1() == clientHandler)
+                    ? gameSession.getPlayer2()
+                    : gameSession.getPlayer1();
+
+            gameSessions.remove(clientHandler);
+            gameSessions.remove(opponent);
+
             opponent.getConnection().sendMessage(Protocol.formatGameOver("Opponent disconnected", opponent.getUsername()));
-        } else if (playersInGame.containsValue(clientHandler)) {
-            Optional<Map.Entry<ClientHandler, ClientHandler>> entry = playersInGame.entrySet().stream()
-                    .filter(e -> e.getValue().equals(clientHandler)).findFirst();
-            if (entry.isPresent()) {
-                ClientHandler opponent = entry.get().getKey();
-                playersInGame.remove(opponent);
-                playersInGame.remove(clientHandler);
-                opponent.getConnection().sendMessage(Protocol.formatGameOver("Opponent disconnected", opponent.getUsername()));
-            }
         }
+    }
+    /**
+     * Returns the game session for the given client handler.
+     * @param clientHandler the client handler
+     * @return the game session for the given client handler
+     */
+    public GameSession getGameSession(ClientHandler clientHandler) {
+        return gameSessions.get(clientHandler);
     }
 
 
@@ -178,8 +221,7 @@ public class ServerImp extends SocketServer {
         }
         ServerImp server = new ServerImp(port);
         server.isServerEmpty();
+        server.waitForPlayersAndStartGame();
         server.acceptConnections();
     }
-
-
 }

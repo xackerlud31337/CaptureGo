@@ -1,11 +1,14 @@
 package Network.Server;
 
-public class ClientHandler {
+import Game.Player;
+
+public class ClientHandler extends Player {
     private final ServerImp server;
     private ServerConnection serverConnection;
     private String username;
 
     public ClientHandler(ServerImp server) {
+        super("Unknown", "+");
         this.server = server;
     }
 
@@ -13,7 +16,7 @@ public class ClientHandler {
         this.serverConnection = serverConnection;
     }
 
-    protected ServerConnection getConnection() {
+    public ServerConnection getConnection() {
         return serverConnection;
     }
 
@@ -23,6 +26,7 @@ public class ClientHandler {
 
     protected void receiveUsername(String username) {
         this.username = username;
+        super.setName(username);
     }
 
     public void handleDisconnect() {

@@ -1,6 +1,7 @@
 package Network.Server;
 
 import Network.Server.Base.SocketConnection;
+import Network.Server.GameManagement.GameSession;
 import Network.Server.Protocol.Protocol;
 import java.io.IOException;
 import java.net.Socket;
@@ -49,8 +50,25 @@ public class ServerConnection extends SocketConnection {
             switch (message.split(Protocol.DELIMITER)[0]) {
                 case Protocol.LIST -> sendMessage(Protocol.formatList(server.getClients()));
                 case Protocol.QUEUE -> queuePlayer(clientHandler);
-                case Protocol.MOVE -> sendMessage("TODO: Implement move");
-                default -> System.out.println(Protocol.formatError("Invalid message received: " + message));
+                case Protocol.MOVE -> {
+                    GameSession gameSession = server.getGameSession(clientHandler);
+                    if (gameSession != null) {
+                        if (gameSession.getTurn() && gameSession.getPlayer1() == clientHandler) {
+                            gameSession.queueMove(Integer.parseInt(message.split(Protocol.DELIMITER)[1]));
+                            gameSession.getPlayer2().getConnection().sendMessage(message);
+                            sendMessage(message);
+                        } else if (!gameSession.getTurn() && gameSession.getPlayer2() == clientHandler) {
+                            gameSession.queueMove(Integer.parseInt(message.split(Protocol.DELIMITER)[1]));
+                            gameSession.getPlayer1().getConnection().sendMessage(message);
+                            sendMessage(message);
+                        } else {
+                            sendMessage(Protocol.formatError("It is not your turn."));
+                        }
+                    } else {
+                        sendMessage(Protocol.formatError("You are not in a game."));
+                    }
+                }
+                default -> sendMessage(Protocol.formatError("Invalid message received: " + message));
             }
         }
     }
@@ -66,9 +84,6 @@ public class ServerConnection extends SocketConnection {
             server.removeQueue(clientHandler);
         }else{
             server.addToQueue(clientHandler);
-            if (server.getQueue().size() >= 2){
-                server.startGame();
-            }
         }
     }
 
