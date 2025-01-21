@@ -85,7 +85,7 @@ public class CaptureGoBoard {
      * @return true if the move is valid, false otherwise
      */
     public boolean isValidMove(int row, int col) {
-        if (row < 0 || row > size || col < 0 || col > size) {
+        if (row < 0 || row >= size || col < 0 || col >= size) {
             return false;
         }
         int actualRow = row * 2;

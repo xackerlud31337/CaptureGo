@@ -258,12 +258,16 @@ public class CaptureGoGame {
      * If a player has captured the required number of stones, they are declared the winner.
      * @return the winning player, or null if there is no winner yet.
      */
-    private Player checkWinner() {
+    public Player checkWinner() {
         if (player1.getCapturedStones() >= captureGoal) {
             return player1;
         } else if (player2.getCapturedStones() >= captureGoal) {
             return player2;
         }
         return null; // No winner yet
+    }
+
+    public CaptureGoBoard getBoard() {
+        return board;
     }
 }

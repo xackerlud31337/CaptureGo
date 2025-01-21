@@ -24,7 +24,7 @@ public class ClientHandler extends Player {
         return username;
     }
 
-    protected void receiveUsername(String username) {
+    public void receiveUsername(String username) {
         this.username = username;
         super.setName(username);
     }

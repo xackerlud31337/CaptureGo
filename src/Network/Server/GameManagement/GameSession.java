@@ -205,7 +205,7 @@ public class GameSession {
      * Check if a player has reached the capture goal.
      * @return the winning player, or null if no winner yet
      */
-    private ClientHandler checkWinner() {
+    public ClientHandler checkWinner() {
         if (player1.getCapturedStones() >= captureGoal) {
             return player1;
         } else if (player2.getCapturedStones() >= captureGoal) {
@@ -220,5 +220,9 @@ public class GameSession {
      */
     public boolean getTurn() {
         return isPlayer1Turn;
+    }
+
+    public CaptureGoBoard getBoard() {
+        return board;
     }
 }
