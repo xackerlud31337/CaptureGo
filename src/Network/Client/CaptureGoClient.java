@@ -79,6 +79,8 @@ public class CaptureGoClient {
     }
 
     protected void receiveMove(int message) {
+        int row = message / 7;
+        int col = message % 7;
         System.out.println("The server send a move message: " + message);
     }
 
