@@ -1,4 +1,4 @@
-package Game.tests;
+package Testing;
 
 import Network.Client.ClientGameSession;
 import Game.Player;

@@ -10,6 +10,11 @@ public class Cell {
     private final int column;
 
 
+    /**
+     * Create a new cell with the given row and column position.
+     * @param row the row position of the cell
+     * @param column the column position of the cell
+     */
     public Cell(int row, int column) {
         this.state = "+";
         this.row = row;

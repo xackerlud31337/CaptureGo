@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-public class CaptureGoGameTest {
+public class CaptureGoRandomGameTest {
 
     /**
      * Test a random game with two players, up to a limit of moves.

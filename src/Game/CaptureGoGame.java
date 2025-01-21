@@ -23,24 +23,6 @@ public class CaptureGoGame {
         this.gameOver = false;
     }
 
-    /**
-     * This method will check if the cell is surrounded by different stones.
-     * If the cell is surrounded by different stones, then the cell is not captured.
-     * If the cell is surrounded by the same stones, then the cell is captured.
-     * @param boardCopy is the copy of the board.
-     * @param i is the row of the cell.
-     * @param j is the column of the cell.
-     * @return true if the cell is surrounded by different stones, false otherwise.
-     */
-    private boolean isSurroundedByDifferentStones(Cell[][] boardCopy, int i, int j) {
-        List<Cell> neighbours = board.getNeighbors(boardCopy[i][j]);
-        for (Cell neighbour : neighbours) {
-            if (neighbour.getState().equals(boardCopy[i][j].getState())) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * This method will check if the cell is suicidal.
@@ -51,7 +33,7 @@ public class CaptureGoGame {
      * @param j is the column of the cell.
      * @return true if the cell is suicidal, false otherwise.
      */
-    private boolean isSuicidalCell(Cell[][] boardCopy, int i, int j) {
+    public boolean isSuicidalCell(Cell[][] boardCopy, int i, int j) {
         int[][] directions = {{2, 0}, {-2, 0}, {0, 2}, {0, -2}}; // Orthogonal directions only
 
         // A cell is suicidal if it has no liberties (free cells around it)
@@ -76,23 +58,6 @@ public class CaptureGoGame {
         return !hasLiberties; // If no liberties, the cell is suicidal
     }
 
-
-    /**
-     * This method will check if there is a free cell around the cell.
-     * @param boardCopy is the copy of the board.
-     * @param i is the row of the cell.
-     * @param j is the column of the cell.
-     * @return true if there is a free cell around the cell, false otherwise.
-     */
-    private boolean isThereFreeCell(Cell[][] boardCopy, int i, int j) {
-        List<Cell> neighbours = board.getNeighbors(boardCopy[i][j]);
-        for (Cell neighbour : neighbours) {
-            if (neighbour.isEmpty()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * This method will check if the cell is free to place or if you get captured immediately.
@@ -139,7 +104,7 @@ public class CaptureGoGame {
      * @param stone the stone being checked for capture
      * @param owner the player who owns the stone
      */
-    private void captureStones(Cell stone, Player owner) {
+    public void captureStones(Cell stone, Player owner) {
         // Group of stones being checked for capture
         Set<Cell> group = new HashSet<>();
         // Set of liberties (adjacent empty spaces)
@@ -208,6 +173,11 @@ public class CaptureGoGame {
         player.addCell(boardCopy[actualRow][actualCol]);
     }
 
+    /**
+     * Plays the game between two players.
+     * @param player1 the first player
+     * @param player2 the second player
+     */
     public void playGame(Player player1, Player player2) {
         Scanner scanner = new Scanner(System.in);
         boolean isPlayer1Turn = true;

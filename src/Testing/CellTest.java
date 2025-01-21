@@ -1,4 +1,4 @@
-package Game.tests;
+package Testing;
 
 import Game.Cell;
 import org.junit.jupiter.api.Test;
