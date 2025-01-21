@@ -175,7 +175,7 @@ public class ServerImp extends SocketServer {
         player2.getConnection().sendMessage(Protocol.formatNewGame(player1.getUsername(), player2.getUsername()));
 
         //Change this to change the game
-        GameSession newGameSession = new GameSession(player1, player2, 7, 10);
+        GameSession newGameSession = new GameSession(player1, player2, 6, 10, this);
         gameSessions.put(player1, newGameSession);
         gameSessions.put(player2, newGameSession);
         playersInGame.put(player1, player2);
@@ -197,6 +197,11 @@ public class ServerImp extends SocketServer {
 
             gameSessions.remove(clientHandler);
             gameSessions.remove(opponent);
+            if (playersInGame.containsKey(clientHandler)){
+                playersInGame.remove(clientHandler);
+            }else{
+                playersInGame.remove(opponent);
+            }
 
             opponent.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_DISCONNECT, opponent.getUsername()));
         }
@@ -208,6 +213,20 @@ public class ServerImp extends SocketServer {
      */
     public GameSession getGameSession(ClientHandler clientHandler) {
         return gameSessions.get(clientHandler);
+    }
+
+    public void removeGameSession(GameSession gameSession){
+        gameSessions.remove(gameSession.getPlayer1());
+        gameSessions.remove(gameSession.getPlayer2());
+    }
+
+    public void removePlayers(ClientHandler client1, ClientHandler client2){
+        if (gameSessions.containsKey(client1)) {
+            removeGameSession(gameSessions.get(client1));
+        }
+        if (gameSessions.containsKey(client2)) {
+            removeGameSession(gameSessions.get(client2));
+        }
     }
 
 

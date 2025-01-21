@@ -2,14 +2,13 @@ package Network.Client;
 
 import Game.Cell;
 import Game.Player;
-import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CaptureGoClient {
     private ClientConnection clientConnection;
-    private String username;
+    private ClientGameSession game;
+    private Player ownPlayer;
+    Player otherPlayer;
     private boolean loggedIn = false;
     private boolean inGame = false;
 
@@ -43,16 +42,22 @@ public class CaptureGoClient {
         System.out.println("You are now in the queue!");
     }
 
-    public List<Player> receiveGameStart(String message){
-        List<Player> players = new ArrayList<>();
+    public void receiveGameStart(String message){
         String[] parts = message.split("~");
-        Player player1 = new Player(parts[1], Cell.BLUE_O);
-        Player player2 = new Player(parts[2], Cell.WHITE_O);
-        players.add(player1);
-        players.add(player2);
+        otherPlayer = new Player("", null);
+        if (parts[1].equals(ownPlayer.getName())){
+            ownPlayer.setStone(Cell.WHITE_O);
+            otherPlayer.setStone(Cell.BLUE_O);
+            otherPlayer.setName(parts[2]);
+            game = new ClientGameSession(ownPlayer, otherPlayer);
+        }else{
+            ownPlayer.setStone(Cell.BLUE_O);
+            otherPlayer.setStone(Cell.WHITE_O);
+            otherPlayer.setName(parts[1]);
+            game = new ClientGameSession(otherPlayer, ownPlayer);
+        }
         System.out.println("The game has started!");
         inGame = true;
-        return players;
     }
 
     protected void receiveHello(String s) {
@@ -81,7 +86,7 @@ public class CaptureGoClient {
     protected void receiveMove(int message) {
         int row = message / 7;
         int col = message % 7;
-        System.out.println("The server send a move message: " + message);
+        game.placeStone(row, col);
     }
 
     protected void receiveAlreadyLoggedIn() {
@@ -89,6 +94,19 @@ public class CaptureGoClient {
     }
 
     protected void receiveError(String message) {
+        if (message.contains("Illegal move")){
+            System.out.println("Please select a move between 0 and 48 again: ");
+        } else if (message.contains("not your turn")) {
+            System.out.println("Please wait until it's your turn: ");
+        }
         System.out.println("An error occurred: " + message);
+    }
+
+    protected void setOwnPlayer(Player player){
+        this.ownPlayer = player;
+    }
+
+    public Player getOwnPlayer() {
+        return ownPlayer;
     }
 }

@@ -40,6 +40,7 @@ public class ClientConnection extends SocketConnection {
             case Protocol.HELLO -> client.receiveHello(message.split(Protocol.DELIMITER)[1]);
             case Protocol.LOGIN -> client.receiveLogin();
             case Protocol.LIST -> client.receiveList(message);
+            case Protocol.QUEUE -> client.receiveQueue();
             case Protocol.NEWGAME -> client.receiveGameStart(message);
             case Protocol.MOVE -> client.receiveMove(Integer.parseInt(message.split(Protocol.DELIMITER)[1]));
             case Protocol.ALREADYLOGGEDIN -> client.receiveAlreadyLoggedIn();

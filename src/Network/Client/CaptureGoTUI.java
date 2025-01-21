@@ -1,5 +1,4 @@
 package Network.Client;
-
 import Game.CaptureGoGame;
 import Game.Cell;
 import Game.Player;
@@ -11,16 +10,13 @@ import java.util.Scanner;
 public class CaptureGoTUI {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
         System.out.println("Welcome to Capture Go!");
 
         // ------------------------- Player 1 setup ---------------------------
         System.out.print("Enter the name of Player 1: ");
         String player1Name = scanner.nextLine();
-
         System.out.print("Should Player 1 be an AI? (yes/no): ");
         boolean isPlayer1AI = scanner.nextLine().trim().equalsIgnoreCase("yes");
-
         Player player1;
         if (isPlayer1AI) {
             // Ask which AI

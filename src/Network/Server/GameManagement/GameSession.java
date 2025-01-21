@@ -4,6 +4,7 @@ import Network.Server.ClientHandler;
 import Game.CaptureGoBoard;
 import Game.Cell;
 import Network.Server.Protocol.Protocol;
+import Network.Server.ServerImp;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,11 +17,13 @@ public class GameSession {
     private boolean gameOver;
     private final int captureGoal;
     private final BlockingQueue<int[]> moveQueue;
+    private final ServerImp server;
 
-    public GameSession(ClientHandler player1, ClientHandler player2, int boardSize, int captureGoal) {
+    public GameSession(ClientHandler player1, ClientHandler player2, int boardSize, int captureGoal, ServerImp server) {
         this.player1 = player1;
         this.player2 = player2;
         this.board = new CaptureGoBoard(boardSize);
+        this.server = server;
         this.isPlayer1Turn = true;
         this.gameOver = false;
         this.captureGoal = captureGoal;
@@ -68,7 +71,7 @@ public class GameSession {
      * @param move the move to queue
      */
     public void queueMove(int move) {
-        moveQueue.offer(new int[]{move / board.getSize(), move % board.getSize()});
+        moveQueue.offer(new int[]{move / 7, move % 7});
     }
 
     /**
@@ -88,7 +91,7 @@ public class GameSession {
             isPlayer1Turn = !isPlayer1Turn; // Switch turns
             checkGameOver();
         } else {
-            System.out.println("Invalid move. Make sure the row and column are within 0 to " + (board.getSize() - 1) + " and the spot is not occupied.");
+            currentPlayer.getConnection().sendMessage(Protocol.formatError("Illegal move"));
         }
     }
 
@@ -184,11 +187,17 @@ public class GameSession {
             //System.out.println("The board is full! The game is a draw.");
             gameOver = true;
             player1.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_DRAW, ""));
+            player2.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_DRAW, ""));
+            server.removeGameSession(this);
+            server.removePlayers(player1, player2);
+
         }else if (winner != null) {
             //System.out.println("The winner is " + winner.getName() + "!");
             player1.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_VICTORY, winner.getUsername()));
             player2.getConnection().sendMessage(Protocol.formatGameOver(Protocol.GAMEOVER_VICTORY, winner.getUsername()));
             gameOver = true;
+            server.removeGameSession(this);
+            server.removePlayers(player1, player2);
         }
     }
 

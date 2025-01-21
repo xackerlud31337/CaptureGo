@@ -2,162 +2,133 @@ package Network.Client;
 
 import Game.Player;
 import java.io.IOException;
-import java.util.List;
 import java.util.Scanner;
 
-/**
- * A text-based client UI that relies on the CaptureGoClient and
- * the server’s logic to play Capture Go.
- */
 public class CaptureGoClientTUI {
 
     private CaptureGoClient client;
 
     /**
-     * Constructor creates a client that connects to the server.
+     * Constructor initializes the TUI client and connects to the server.
      */
-    public CaptureGoClientTUI(String host, int port) throws IOException {
-        client = new CaptureGoClient(host, port);
+    public CaptureGoClientTUI(String address, int port, String username) throws IOException {
+        client = new CaptureGoClient(address, port);
+        client.setOwnPlayer(new Player(username, null));
     }
 
     /**
-     * Simple main to run the TUI directly.
+     * Starts the TUI client loop, allowing users to input commands.
      */
-    public static void main(String[] args) {
-        try {
-            Scanner scanner = new Scanner(System.in);
+    public void start() {
+        Scanner scanner = new Scanner(System.in);
 
-            System.out.print("Enter server address: ");
-            String host = scanner.nextLine().trim();
+        // Log in to the server
+        System.out.println("Logging in...");
+        client.login(client.getOwnPlayer().getName());
 
-            System.out.print("Enter server port: ");
-            int port = Integer.parseInt(scanner.nextLine().trim());
-
-            CaptureGoClientTUI tui = new CaptureGoClientTUI(host, port);
-            tui.initialize();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Initialize the client: prompt user for name, wait until logged in, then handle commands.
-     */
-    private void initialize() throws IOException {
-        Scanner input = new Scanner(System.in);
-
-        displayWelcomeMessage();
-
-        System.out.print("Enter your name: ");
-        String name = input.nextLine().trim();
-
-        // Log in to the server (this sends HELLO and LOGIN messages via client)
-        System.out.println("Connecting to the server...");
-        client.login(name);
-
-        // Wait until the server acknowledges your login
+        // Wait until logged in
         while (!client.getLoggedIn()) {
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                System.out.println("Interrupted while waiting for login.");
                 return;
             }
         }
-        System.out.println("Capture Go server connected as '" + name + "'!");
+        System.out.println("Logged in successfully!");
 
-        // Now run the command loop until user types "quit"
-        commandLoop(input);
-    }
-
-    /**
-     * A simple text-based command loop. Type 'quit' to exit.
-     */
-    private void commandLoop(Scanner input) {
-        System.out.println("Available commands: list, queue, move <n>, quit");
-        System.out.println("   - list : show who is online");
-        System.out.println("   - queue: toggle joining/leaving the matchmaking queue");
-        System.out.println("   - move <n>: attempt a move at index n (0..(boardSize^2-1))");
-        System.out.println("   - quit : exit the client");
-
+        // Main command loop
+        System.out.println("Type 'help' to see available commands.");
         while (true) {
             System.out.print("> ");
-            String line = input.nextLine().trim();
-            if (line.equalsIgnoreCase("quit")) {
-                // Graceful shutdown
-                System.out.println("Closing connection...");
+            String input = scanner.nextLine().trim();
+
+            if (input.equalsIgnoreCase("quit")) {
+                System.out.println("Disconnecting...");
                 client.close();
                 break;
             }
 
-            // Parse command
-            String[] tokens = line.split("\\s+");
-            String cmd = tokens[0].toLowerCase();
-
-            switch (cmd) {
-                case "list" -> client.sendList();
-
-                case "queue" -> {
-                    if (!client.inGame()) {
-                        client.sendQueue();
-                    } else {
-                        System.out.println("You're already in a game!");
-                    }
-                }
-
-                case "move" -> {
-                    if (!client.inGame()) {
-                        System.out.println("You are not in a game! Type 'queue' to join the queue.");
-                        break;
-                    }
-                    // Expect 'move <integer>'
-                    if (tokens.length < 2) {
-                        System.out.println("Usage: move <index>");
-                        break;
-                    }
-                    try {
-                        int moveIndex = Integer.parseInt(tokens[1]);
-                        if (moveIndex < 0) {
-                            System.out.println("Move index must be >= 0.");
-                            break;
-                        }
-                        client.sendMove(moveIndex);
-                    } catch (NumberFormatException e) {
-                        System.out.println("Usage: move <integer>");
-                    }
-                }
-
-                default -> System.out.println("Unknown command: " + cmd + ". Type 'list','queue','move','quit'.");
-            }
+            handleCommand(input);
         }
     }
 
     /**
-     * Just a welcome banner to appear once on startup.
+     * Handles commands input by the user.
      */
-    private void displayWelcomeMessage() {
-        System.out.println("===================================");
-        System.out.println("       Welcome to Capture Go");
-        System.out.println("===================================");
-        System.out.println("This client relies on the server’s logic.");
-        System.out.println("You will log in, join the queue, and the server will pair you for a game.");
-        System.out.println("When you're in a game, type 'move <n>' to place a stone in cell index <n>.");
-        System.out.println("===================================");
+    private void handleCommand(String input) {
+        String[] tokens = input.split("\\s+");
+        String command = tokens[0].toLowerCase();
+
+        try {
+            switch (command) {
+                case "list" -> client.sendList();
+                case "queue" -> client.sendQueue();
+                case "move" -> handleMoveCommand(tokens);
+                case "help" -> displayHelp();
+                default -> System.out.println("Unknown command. Type 'help' for available commands.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error processing command: " + e.getMessage());
+        }
     }
 
     /**
-     * If needed, you can call this from your code to start a local game view
-     * after receiving a NEWGAME. But since the server controls logic,
-     * you don't really need to do it locally.
-     *
-     * You already have 'receiveGameStart' in CaptureGoClient that returns
-     * a list of Players. If you wanted the TUI to do something with them,
-     * you could do so here. For example:
+     * Handles the "move" command.
      */
-    public void startGame(List<Player> players) {
-        System.out.println("Server started a game between: "
-                                   + players.get(0).getName() + " and "
-                                   + players.get(1).getName());
-        // (No local game logic needed, as the server handles it.)
+    private void handleMoveCommand(String[] tokens) {
+        if (!client.inGame()) {
+            System.out.println("You are not currently in a game. Type 'queue' to join.");
+            return;
+        }
+        if (tokens.length < 2) {
+            System.out.println("Usage: move <index>");
+            return;
+        }
+        try {
+            int move = Integer.parseInt(tokens[1]);
+            if (move < 0 || move > 48) {
+                System.out.println("Invalid move. Please enter a value between 0 and 48.");
+                return;
+            }
+            client.sendMove(move);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid move format. Please enter an integer.");
+        }
+    }
+
+    /**
+     * Displays available commands.
+     */
+    private void displayHelp() {
+        System.out.println("Available commands:");
+        System.out.println("  list          - List all online players.");
+        System.out.println("  queue         - Join the matchmaking queue.");
+        System.out.println("  move <index>  - Make a move at the specified board index (0-48).");
+        System.out.println("  quit          - Disconnect from the server and exit.");
+    }
+
+    /**
+     * Main entry point for the TUI client.
+     */
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter server address (e.g., localhost): ");
+        String address = scanner.nextLine().trim();
+
+        System.out.print("Enter server port (e.g., 12345): ");
+        int port = Integer.parseInt(scanner.nextLine().trim());
+
+        System.out.print("Enter your username: ");
+        String username = scanner.nextLine().trim();
+
+        try {
+            CaptureGoClientTUI tuiClient = new CaptureGoClientTUI(address, port, username);
+            tuiClient.start();
+        } catch (IOException e) {
+            System.out.println("Failed to connect to server: " + e.getMessage());
+        }
     }
 }

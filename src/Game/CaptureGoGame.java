@@ -5,11 +5,10 @@ import java.util.*;
 import Players.NaiveAI;
 
 public class CaptureGoGame {
-    private CaptureGoBoard board;
+    private final CaptureGoBoard board;
     private final Player player1;
     private final Player player2;
     private boolean isPlayer1turn;
-    private Cell[][] boardCopy;
     private final int size;
     private final int captureGoal;
     private boolean gameOver;
@@ -194,7 +193,7 @@ public class CaptureGoGame {
     public void placeStone(int row, int col, Player player) {
         int actualRow = row * 2;
         int actualCol = col * 2;
-        boardCopy = board.boardDeepCopy();
+        Cell[][] boardCopy = board.boardDeepCopy();
 
 
         // Validate that the move is on a valid, empty intersection
