@@ -85,11 +85,11 @@ public class CaptureGoBoard {
      * @return true if the move is valid, false otherwise
      */
     public boolean isValidMove(int row, int col) {
-        if (row < 0 || row >= size || col < 0 || col >= size) {
-            return false;
-        }
         int actualRow = row * 2;
         int actualCol = col * 2;
+        if (actualRow < 0 || actualRow >= grid.length || actualCol < 0 || actualCol >= grid[0].length) {
+            return false;
+        }
         Cell cell = grid[actualRow][actualCol];
         return cell != null && cell.isEmpty();
     }

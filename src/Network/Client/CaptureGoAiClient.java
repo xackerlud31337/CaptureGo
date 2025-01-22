@@ -1,218 +1,241 @@
-//package Network.Client;
-//
-//import Game.Cell;
-//import Game.CaptureGoBoard;
-//import Game.Player;
-//import Players.GoAI;
-//import Players.NaiveAI;
-//import Players.SafeAI;
-//import Players.ComplexAI;
-//
-//import java.io.IOException;
-//import java.util.List;
-//import java.util.Scanner;
-//
-///**
-// * An AI-based client that extends CaptureGoClient.
-// * It auto-queues for a game, tracks the board locally,
-// * and sends moves (MOVE~n) whenever it is its turn.
-// */
-//public class CaptureGoAiClient{
-//
-//    private Player aiPlayer;
-//    private CaptureGoBoard board;
-//    private int moveCount = 0;
-//    private String myStone = null;
-//    private int boardSize = 7;
-//    CaptureGoClient client;
-//
-//    /**
-//     * Constructor calls super(...) to build the underlying client connection,
-//     * then sets up the AI player.
-//     */
-//    public CaptureGoAiClient(String address, int port, Player aiPlayer) throws IOException {
-//        client = new CaptureGoClient(address, port);
-//        this.aiPlayer = aiPlayer;
-//    }
-//
-//    /**
-//     * We override this so we can determine which stone color we are,
-//     * reset local board, and get ready for a new game.
-//     */
-//    @Override
-//    public void receiveGameStart(String message) {
-//
-//
-//        // The original code:
-//        //   Player player1 = new Player(parts[1], Cell.BLUE_O);
-//        //   Player player2 = new Player(parts[2], Cell.WHITE_O);
-//        // so players.get(0) is the BLUE player, players.get(1) is the WHITE player.
-//
-//        Player pBlue = players.get(0);
-//        Player pWhite = players.get(1);
-//
-//        // Check if the AI's username matches pBlue or pWhite:
-//        if (pBlue.getName().equalsIgnoreCase(aiPlayer.getName())) {
-//            // We are the BLUE player
-//            this.myStone = Cell.BLUE_O;
-//            // Ensure our internal Player object uses BLUE_O
-//            aiPlayer.setStone(Cell.BLUE_O);
-//            System.out.println("AI recognized as the BLUE player. (Blue moves first in your setup!)");
-//        } else if (pWhite.getName().equalsIgnoreCase(aiPlayer.getName())) {
-//            // We are the WHITE player
-//            this.myStone = Cell.WHITE_O;
-//            aiPlayer.setStone(Cell.WHITE_O);
-//            System.out.println("AI recognized as the WHITE player.");
-//        } else {
-//            // If our AI name doesn't match either, fallback or log an error
-//            System.out.println("Warning: AI username didn't match p1 or p2. The AI might not move properly.");
-//        }
-//
-//        // Reset local tracking:
-//        this.moveCount = 0;
-//        // If your server always uses boardSize=7, that’s fine. Otherwise parse from server if available.
-//        this.board = new CaptureGoBoard(boardSize);
-//        if (Cell.BLUE_O.equals(myStone)) {
-//            // It's moveCount=0 => Blue's turn => we do an AI move:
-//            doAIMoveIfMyTurn();
-//        }
-//
-//        return players;
-//    }
-//
-//    /**
-//     * Called whenever the server broadcasts a MOVE~<index>.
-//     * We'll update our local board and see whose turn it is next.
-//     */
-//    @Override
-//    protected void receiveMove(int moveIndex) {
-//        int row = moveIndex / boardSize;
-//        int col = moveIndex % boardSize;
-//        String color = (moveCount % 2 == 0) ? Cell.BLUE_O : Cell.WHITE_O;
-//
-//        System.out.println("Coordinates received: " + row + col);
-//
-//        // Update local board
-//        board.setCell(row, col, color);
-//
-//        // Increment moveCount
-//        moveCount++;
-//
-//        // Now see if it's our turn.
-//        doAIMoveIfMyTurn();
-//    }
-//
-//    /**
-//     * Checks if it's our turn, and if so, asks the AI for a move and sends it.
-//     */
-//    private void doAIMoveIfMyTurn() {
-//        // If we are the BLUE player, we move on even moveCount.
-//        // If we are WHITE, we move on odd moveCount.
-//        boolean isBlueTurn = (moveCount % 2 == 0);
-//        boolean iAmBlue = Cell.BLUE_O.equals(myStone);
-//
-//        // Or a simple check:
-//        if (iAmBlue && isBlueTurn) {
-//            // It's my turn
-//            makeAIMove();
-//        } else if (!iAmBlue && !isBlueTurn) {
-//            // White player's turn
-//            makeAIMove();
-//        }
-//        // Otherwise, it's the opponent's turn, do nothing.
-//    }
-//
-//    /**
-//     * The AI picks a move from the local board, and we send MOVE~<index> to the server.
-//     */
-//    private void makeAIMove() {
-//        Cell chosen;
-//        if (aiPlayer instanceof GoAI) {
-//            chosen = ((GoAI) aiPlayer).chooseMove(board);
-//        } else {
-//            System.out.println("[AI] The AI player is not an instance of GoAI.");
-//            return;
-//        }
-//        if (chosen == null) {
-//            System.out.println("[AI] No valid moves found. Doing nothing.");
-//            return;
-//        }
-//        int row = chosen.getRow() / 2;
-//        int col = chosen.getCol() / 2;
-//        int moveIndex = row * boardSize + col;
-//        System.out.println("[AI] Sending move: row=" + row + ", col=" + col + " => index " + moveIndex);
-//        sendMove(moveIndex);
-//    }
-//
-//    // --- MAIN METHOD EXAMPLE ---
-//    public static void main(String[] args) {
-//        Scanner sc = new Scanner(System.in);
-//
-//        System.out.print("Server address (e.g. localhost): ");
-//        String address = sc.nextLine().trim();
-//
-//        System.out.print("Server port: ");
-//        int port = Integer.parseInt(sc.nextLine().trim());
-//
-//        // Which AI type?
-//        System.out.print("Which AI? (naive / safe / complex): ");
-//        String aiType = sc.nextLine().trim().toLowerCase();
-//
-//        // We'll also ask for a username for the AI on the server
-//        System.out.print("Enter AI's username: ");
-//        String aiName = sc.nextLine().trim();
-//
-//        // Build the AI Player object
-//        Player aiPlayer;
-//        switch (aiType) {
-//            case "safe" -> {
-//                aiPlayer = new SafeAI(aiName, Cell.BLUE_O);
-//            }
-//            case "complex" -> {
-//                aiPlayer = new ComplexAI(aiName, Cell.BLUE_O, 2000, 1.4);
-//            }
-//            default -> {
-//                aiPlayer = new NaiveAI(aiName, Cell.BLUE_O);
-//            }
-//        }
-//
-//        try {
-//            // Create AI client
-//            CaptureGoAiClient clientAI = new CaptureGoAiClient(address, port, aiPlayer);
-//
-//            // Connect + start reading from server
-//            // (This calls super(...) which starts a ClientConnection thread.)
-//            // Now log in to the server
-//            clientAI.login(aiName);
-//
-//            // Wait until 'loggedIn' is true
-//            while (!clientAI.getLoggedIn()) {
-//                System.out.println("Waiting for server to confirm login...");
-//                Thread.sleep(500);
-//            }
-//            System.out.println("Logged in successfully!");
-//
-//            // Optionally, auto-join the queue so it can get matched:
-//            System.out.println("Joining the queue...");
-//            clientAI.sendQueue();
-//
-//            // Keep running until user decides to stop or server closes.
-//            // For a real "headless" AI, you might just block forever.
-//            // Here's a small prompt to let the user type "quit".
-//            while (true) {
-//                System.out.println("Type 'quit' to exit or 'list' to see players, 'queue' to toggle queue:");
-//                String cmd = sc.nextLine().trim();
-//                if (cmd.equalsIgnoreCase("quit")) {
-//                    clientAI.close();
-//                    break;
-//                } else if (cmd.equalsIgnoreCase("list")) {
-//                    clientAI.sendList();
-//                } else if (cmd.equalsIgnoreCase("queue")) {
-//                    clientAI.sendQueue();
-//                }
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-//}
+package Network.Client;
+
+import Game.Cell;
+import Game.CaptureGoBoard;
+import Game.Player;
+import Players.ComplexAI;
+import Players.GoAI;
+import Players.NaiveAI;
+import Players.SafeAI;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
+
+/**
+ * A TUI-based client that uses composition (NOT extending CaptureGoClient).
+ * - Logs in, queues, and lets you do "list"/"queue"/"quit" commands.
+ * - On a separate thread, automatically makes AI moves when it becomes your turn.
+ */
+public class CaptureGoAiClient {
+
+    // The underlying CaptureGoClient instance
+    private final CaptureGoClient client;
+    // Which AI we are using (Naive, Safe, Complex, etc.)
+    private final GoAI aiPlayer;
+    // Board size to interpret moves (change to 6 if your server truly uses 6×6)
+    private final int BOARD_SIZE = 7;
+
+    // Thread that periodically checks if it's our turn and makes AI moves
+    private Thread aiThread;
+    private volatile boolean stopAiThread = false;
+
+    public CaptureGoAiClient(String address, int port, GoAI ai, String username) throws IOException {
+        this.client = new CaptureGoClient(address, port);
+        this.aiPlayer = ai;
+        // Set the local player's name (stone color is assigned later by receiveGameStart)
+        client.setOwnPlayer(new Player(username, null));
+    }
+
+    /**
+     * Start the TUI:
+     * 1) Login
+     * 2) Possibly auto-queue
+     * 3) Start AI thread
+     * 4) Command loop (list, queue, quit, etc.)
+     */
+    public void start() {
+        System.out.println("Logging in with username: " + client.getOwnPlayer().getName());
+        client.login(client.getOwnPlayer().getName());
+
+        // Wait for successful login
+        while (!client.getLoggedIn()) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                System.out.println("Interrupted while waiting for login.");
+                return;
+            }
+        }
+        System.out.println("Logged in successfully!");
+
+        // Optionally join queue right away
+        System.out.println("Joining queue...");
+        client.sendQueue();
+
+        // Start AI polling loop in a background thread
+        aiThread = new Thread(this::runAiLoop, "AiMoveThread");
+        aiThread.start();
+
+        // Now the main TUI command loop
+        commandLoop();
+    }
+
+    /**
+     * The main blocking loop for user commands: list, queue, help, quit.
+     */
+    private void commandLoop() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Type 'help' for commands.");
+        while (true) {
+            System.out.print("> ");
+            String cmd = scanner.nextLine().trim().toLowerCase();
+            switch (cmd) {
+                case "quit" -> {
+                    System.out.println("Shutting down AI client...");
+                    stopAiThread = true; // signal AI thread to stop
+                    client.close();      // close underlying connection
+                    return;              // exit the command loop
+                }
+                case "list" -> client.sendList();
+                case "queue" -> client.sendQueue();
+                case "help" -> printHelp();
+                default -> System.out.println("Unknown command. Type 'help' for a list of commands.");
+            }
+        }
+    }
+
+    /**
+     * Prints available commands.
+     */
+    private void printHelp() {
+        System.out.println("Available commands:");
+        System.out.println("  list   - Request a list of online players");
+        System.out.println("  queue  - Join matchmaking queue");
+        System.out.println("  help   - Show this help message");
+        System.out.println("  quit   - Disconnect and exit");
+        System.out.println("\n[AI] Moves are performed automatically on your turn!");
+    }
+
+    /**
+     * Background thread that periodically checks if it's our turn in a game.
+     * If so, we ask the AI for a move and send it to the server.
+     */
+    private void runAiLoop() {
+        while (!stopAiThread) {
+            try {
+                // If inGame = true and it's our turn, do AI move
+                if (client.inGame()) {
+                    // Are we Blue or White?
+                    String myStone = client.getOwnPlayer().getStone();
+                    if (myStone != null) {
+                        // Check if it's truly our turn
+                        if (isMyTurn()) {
+                            doAiMove();
+                        }
+                    }
+                }
+                Thread.sleep(500); // poll every 0.5s
+            } catch (InterruptedException e) {
+                // If interrupted, we'll just stop
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+    }
+
+    /**
+     * Determines if our local player is the current player in the session.
+     * We do this by reflecting into CaptureGoClient's private "game" field
+     * and calling getCurrentPlayer().
+     */
+    private boolean isMyTurn() {
+        ClientGameSession session = getCurrentSession();
+        if (session == null) return false;
+
+        // If the session's current player is the same object as our own, it's our turn
+        return session.getCurrentPlayer() == client.getOwnPlayer();
+    }
+
+    /**
+     * Actually call the AI to pick a move and send it to the server.
+     */
+    private void doAiMove() {
+        ClientGameSession session = getCurrentSession();
+        if (session == null) {
+            System.out.println("[AI] No active game session found.");
+            return;
+        }
+
+        // The AI's chooseMove expects a CaptureGoBoard. We can just use the session's board:
+        CaptureGoBoard board = session.getBoard();
+
+        // The AI returns a Cell with row/col
+        Cell chosenCell = aiPlayer.chooseMove(board);
+        if (chosenCell == null) {
+            System.out.println("[AI] No valid moves found. Skipping turn.");
+            return;
+        }
+
+        // If your AI or board uses different row/col scaling, adjust accordingly
+        int row = chosenCell.getRow();
+        int col = chosenCell.getCol();
+        int moveIndex = row * BOARD_SIZE + col;
+
+        System.out.printf("[AI] Sending move for row=%d, col=%d => index=%d%n", row, col, moveIndex);
+        client.sendMove(moveIndex);
+    }
+
+    /**
+     * Reflection-based getter to read the private `game` field from `CaptureGoClient`.
+     */
+    private ClientGameSession getCurrentSession() {
+        try {
+            Field f = CaptureGoClient.class.getDeclaredField("game");
+            f.setAccessible(true);
+            return (ClientGameSession) f.get(client);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Main entry point: ask user for server info, AI type, username, and run the TUI.
+     */
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Ask for server address
+        System.out.print("Server address (e.g. localhost): ");
+        String address = sc.nextLine().trim();
+
+        // Ask for port
+        int port = -1;
+        while (port < 0 || port > 65535) {
+            System.out.print("Server port (e.g., 12345): ");
+            try {
+                port = Integer.parseInt(sc.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid port. Try again.");
+            }
+        }
+
+        // Ask which AI
+        System.out.print("Which AI? (naive / safe / complex): ");
+        String aiType = sc.nextLine().trim().toLowerCase();
+
+        // Ask for username
+        System.out.print("Enter AI's username: ");
+        String aiName = sc.nextLine().trim();
+
+        // Create the chosen AI
+        GoAI aiPlayer;
+        switch (aiType) {
+            case "safe" -> aiPlayer = new SafeAI(aiName, Cell.BLUE_O);
+            case "complex" -> aiPlayer = new ComplexAI(aiName, Cell.BLUE_O, 2000, 1.4);
+            default -> aiPlayer = new NaiveAI(aiName, Cell.BLUE_O);
+        }
+
+        // Create and start the TUI + AI
+        try {
+            CaptureGoAiClient aiTui = new CaptureGoAiClient(address, port, aiPlayer, aiName);
+            aiTui.start();  // runs until user types 'quit'
+        } catch (IOException e) {
+            System.out.println("Failed to connect: " + e.getMessage());
+        }
+    }
+}

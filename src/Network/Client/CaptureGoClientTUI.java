@@ -2,6 +2,7 @@ package Network.Client;
 
 import Game.Player;
 import java.io.IOException;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class CaptureGoClientTUI {
@@ -117,9 +118,18 @@ public class CaptureGoClientTUI {
 
         System.out.print("Enter server address (e.g., localhost): ");
         String address = scanner.nextLine().trim();
-
-        System.out.print("Enter server port (e.g., 12345): ");
-        int port = Integer.parseInt(scanner.nextLine().trim());
+        int port = -1;
+        while (port < 0 || port > 65535) {
+            System.out.print("Enter server port (e.g., 12345): ");
+            try{
+                port = Integer.parseInt(scanner.nextLine().trim());
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid port. Please enter a valid port number.");
+                scanner.next();
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid port. Please enter a valid port number.");
+            }
+        }
 
         System.out.print("Enter your username: ");
         String username = scanner.nextLine().trim();

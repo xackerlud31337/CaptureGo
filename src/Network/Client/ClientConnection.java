@@ -15,7 +15,7 @@ public class ClientConnection extends SocketConnection {
     }
 
     protected void sendHello(String username){
-        sendMessage(Protocol.formatHello(username));
+        sendMessage(Protocol.formatHello("Client by " + username));
     }
 
     protected void sendLogin(String username){

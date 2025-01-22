@@ -232,11 +232,17 @@ public class ServerImp extends SocketServer {
 
     public static void main(String[] args) throws IOException {
         Scanner input = new Scanner(System.in);
-        System.out.println("Please provide a port:");
-        int port = input.nextInt();
+        int port = -1;
         while (port < 0 || port > 65535) {
-            System.out.println("Please provide a valid port:");
-            port = input.nextInt();
+            System.out.println("Please provide a port:");
+            try {
+                port = input.nextInt();
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                input.next(); // Clear the invalid input
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+            }
         }
         ServerImp server = new ServerImp(port);
         server.isServerEmpty();

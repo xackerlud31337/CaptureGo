@@ -33,7 +33,7 @@ public class ServerConnection extends SocketConnection {
         if (!helloNotReceived){
             if(message.startsWith(Protocol.HELLO)){
                 helloNotReceived = true;
-                sendMessage(Protocol.formatHello("Welcome from the Capture Go Game server!\nPlease enter your username following the format \"LOGIN~<username>\"."));
+                sendMessage(Protocol.formatHello("Welcome from the Capture Go Game server!"));
             }
         } else if (message.startsWith(Protocol.LOGIN)) {
             // We don't check if the player is already in a game, and they send LOGIN again, return ALREADYLOGGEDIN
@@ -55,12 +55,8 @@ public class ServerConnection extends SocketConnection {
                     if (gameSession != null) {
                         if (gameSession.getTurn() && gameSession.getPlayer1() == clientHandler) {
                             gameSession.queueMove(Integer.parseInt(message.split(Protocol.DELIMITER)[1]));
-                            gameSession.getPlayer2().getConnection().sendMessage(message);
-                            sendMessage(message);
                         } else if (!gameSession.getTurn() && gameSession.getPlayer2() == clientHandler) {
                             gameSession.queueMove(Integer.parseInt(message.split(Protocol.DELIMITER)[1]));
-                            gameSession.getPlayer1().getConnection().sendMessage(message);
-                            sendMessage(message);
                         } else {
                             sendMessage(Protocol.formatError("It is not your turn."));
                         }

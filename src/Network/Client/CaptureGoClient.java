@@ -3,6 +3,7 @@ package Network.Client;
 import Game.Cell;
 import Game.Player;
 import java.io.IOException;
+import java.util.Scanner;
 
 public class CaptureGoClient {
     private ClientConnection clientConnection;
@@ -22,8 +23,22 @@ public class CaptureGoClient {
     }
 
     protected void login(String username) {
+        Scanner scanner = new Scanner(System.in);
         clientConnection.sendHello(username);
-        clientConnection.sendLogin(username);
+        while (!loggedIn) {
+            clientConnection.sendLogin(username);
+            try {
+                Thread.sleep(500); // Wait for the server to respond
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("Interrupted while waiting for login.");
+                return;
+            }
+            if (!loggedIn) {
+                System.out.println("Your username is not valid, please enter a new one:");
+                username = scanner.nextLine().trim();
+            }
+        }
     }
 
     protected void sendMove(int move) {
@@ -61,7 +76,7 @@ public class CaptureGoClient {
     }
 
     protected void receiveHello(String s) {
-        System.out.println("The server send a hello message: " + s);
+        System.out.println("The server sent a hello message: " + s);
     }
 
     protected void receiveLogin() {
@@ -79,18 +94,23 @@ public class CaptureGoClient {
         System.out.println("The list of players is: ");
         String[] parts = message.split("~");
         for (int i = 1; i < parts.length; i++) {
-            System.out.print(" " + parts[i]);
+            System.out.print(parts[i] + ", ");
         }
+        System.out.println();
+        System.out.println("> ");
     }
 
     protected void receiveMove(int message) {
         int row = message / 7;
         int col = message % 7;
         game.placeStone(row, col);
+        game.getBoard().render();
     }
 
     protected void receiveAlreadyLoggedIn() {
-        System.out.println("You are already logged in!");
+        if (loggedIn) {
+            System.out.println("You are already logged in!");
+        }
     }
 
     protected void receiveError(String message) {

@@ -48,9 +48,9 @@ public class GameSession {
     public void playGame() {
         while (!gameOver) {
             //Comment out when finished
-            board.render();
+            //board.render();
             ClientHandler currentPlayer = isPlayer1Turn ? player1 : player2;
-            System.out.println(currentPlayer.getUsername() + "'s turn (" + (isPlayer1Turn ? "White" : "Blue") + ").");
+            //System.out.println(currentPlayer.getUsername() + "'s turn (" + (isPlayer1Turn ? "White" : "Blue") + ").");
 
             try {
                 int[] move = moveQueue.take(); // Wait for the next move
@@ -61,9 +61,9 @@ public class GameSession {
                 break;
             }
         }
-        System.out.println("Game over! Final board:");
+        //System.out.println("Game over! Final board:");
         //Comment out when finished
-        board.render();
+        //board.render();
     }
 
     /**
@@ -89,6 +89,8 @@ public class GameSession {
         if (board.isValidMove(row, col)) {
             placeStone(row, col, currentPlayer);
             isPlayer1Turn = !isPlayer1Turn; // Switch turns
+            player1.getConnection().sendMessage(Protocol.formatMove(row * 7 + col));
+            player2.getConnection().sendMessage(Protocol.formatMove(row * 7 + col));
             checkGameOver();
         } else {
             currentPlayer.getConnection().sendMessage(Protocol.formatError("Illegal move"));
