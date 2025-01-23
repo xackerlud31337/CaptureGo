@@ -93,7 +93,7 @@ public class GameSession {
             player2.getConnection().sendMessage(Protocol.formatMove(row * 7 + col));
             checkGameOver();
         } else {
-            currentPlayer.getConnection().sendMessage(Protocol.formatError("Illegal move"));
+            currentPlayer.getConnection().sendMessage(Protocol.formatError("Invalid move: on row " + row + ", col " + col));
         }
     }
 

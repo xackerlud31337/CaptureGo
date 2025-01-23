@@ -28,4 +28,9 @@ public class ComplexAI extends Player implements GoAI {
         }
         return bestChild.getMove();
     }
+
+    @Override
+    public String getName() {
+        return super.getName();
+    }
 }

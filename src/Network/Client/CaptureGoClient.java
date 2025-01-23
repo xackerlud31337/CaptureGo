@@ -72,6 +72,7 @@ public class CaptureGoClient {
             game = new ClientGameSession(otherPlayer, ownPlayer);
         }
         System.out.println("The game has started!");
+        System.out.println(game.getCurrentPlayer().getName() + "'s turn.");
         inGame = true;
     }
 

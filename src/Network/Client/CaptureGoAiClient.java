@@ -23,31 +23,21 @@ import java.util.Scanner;
  */
 public class CaptureGoAiClient {
 
-    // The underlying CaptureGoClient instance
     private final CaptureGoClient client;
-    // Which AI we are using (Naive, Safe, Complex, etc.)
     private final GoAI aiPlayer;
-    // Board size to interpret moves (change to 6 if your server truly uses 6×6)
     private final int BOARD_SIZE = 7;
 
-    // Thread that periodically checks if it's our turn and makes AI moves
+    //Used for checking if it's our turn
     private Thread aiThread;
     private volatile boolean stopAiThread = false;
 
     public CaptureGoAiClient(String address, int port, GoAI ai, String username) throws IOException {
         this.client = new CaptureGoClient(address, port);
         this.aiPlayer = ai;
-        // Set the local player's name (stone color is assigned later by receiveGameStart)
         client.setOwnPlayer(new Player(username, null));
     }
 
-    /**
-     * Start the TUI:
-     * 1) Login
-     * 2) Possibly auto-queue
-     * 3) Start AI thread
-     * 4) Command loop (list, queue, quit, etc.)
-     */
+
     public void start() {
         System.out.println("Logging in with username: " + client.getOwnPlayer().getName());
         client.login(client.getOwnPlayer().getName());
@@ -63,7 +53,6 @@ public class CaptureGoAiClient {
         }
         System.out.println("Logged in successfully!");
 
-        // Optionally join queue right away
         System.out.println("Joining queue...");
         client.sendQueue();
 
@@ -120,16 +109,14 @@ public class CaptureGoAiClient {
             try {
                 // If inGame = true and it's our turn, do AI move
                 if (client.inGame()) {
-                    // Are we Blue or White?
                     String myStone = client.getOwnPlayer().getStone();
                     if (myStone != null) {
-                        // Check if it's truly our turn
                         if (isMyTurn()) {
                             doAiMove();
                         }
                     }
                 }
-                Thread.sleep(500); // poll every 0.5s
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 // If interrupted, we'll just stop
                 Thread.currentThread().interrupt();
@@ -146,9 +133,12 @@ public class CaptureGoAiClient {
     private boolean isMyTurn() {
         ClientGameSession session = getCurrentSession();
         if (session == null) return false;
-
-        // If the session's current player is the same object as our own, it's our turn
-        return session.getCurrentPlayer() == client.getOwnPlayer();
+        if (session.getCurrentPlayer().getName().equals(aiPlayer.getName())) {
+            System.out.println(session.getCurrentPlayer().getName()+ "'s turn" );
+            return true;
+        }else{
+            return false;
+        }
     }
 
     /**

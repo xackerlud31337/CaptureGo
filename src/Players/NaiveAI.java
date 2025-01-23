@@ -39,4 +39,8 @@ public class NaiveAI extends Player implements GoAI {
         Random random = new Random();
         return validMoves.get(random.nextInt(validMoves.size()));
     }
+
+    public String getName() {
+        return super.getName();
+    }
 }

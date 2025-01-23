@@ -5,4 +5,6 @@ import Game.Cell;
 
 public interface GoAI {
     Cell chooseMove(CaptureGoBoard board);
+
+    String getName();
 }
