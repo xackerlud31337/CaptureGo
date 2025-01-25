@@ -70,7 +70,6 @@ public class CaptureGoGame {
             System.out.println("Invalid move. Try again.");
             return;
         }
-
         // Place the stone on the board
         board.setCell(i, j, currentPlayer.getStone());
 
@@ -87,6 +86,15 @@ public class CaptureGoGame {
                 captureStones(opponentStone, opponent);
             }
         }
+
+        // Check for captures for the current player (immediate capture of the placed stone)
+        List<Cell> yourStones = new ArrayList<>(currentPlayer.getOccupiedCells());
+        for (Cell yourStone : yourStones) {
+            if (yourStone.getState().equals(currentPlayer.getStone())) {
+                captureStones(yourStone, currentPlayer);
+            }
+        }
+
         // Check for winner
         Player winner = checkWinner();
         if (winner != null) {
@@ -200,12 +208,11 @@ public class CaptureGoGame {
                 System.out.println(currentPlayer.getName() + " chooses (" + row + ", " + col + ").");
             } else {
                 // Let the human player make a move
-                System.out.print("Enter row (0 to " + (size) + ") or -1 to quit: ");
-                row = scanner.nextInt();
-                if (row == -1) break;
-
-                System.out.print("Enter column (0 to " + (size) + "): ");
-                col = scanner.nextInt();
+                System.out.print("Enter a move (0 to " + ((size+1) *(size+1) - 1) + ") or -1 to quit: ");
+                int move = scanner.nextInt();
+                if (move == -1) break;
+                row = move / (size+1);
+                col = move % (size+1);
             }
 
             // Validate and process the move

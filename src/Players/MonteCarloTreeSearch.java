@@ -12,9 +12,9 @@ public class MonteCarloTreeSearch {
     // CONFIGURABLE CONSTANTS
     // -----------------------------
 
-    private int captureGoal = 10;
-    private double captureWeight = 10.0;
-    private double libertyWeight = 5.0;
+    private int captureGoal = 3;
+    private double captureWeight = 15.0;
+    private double libertyWeight = 3.0;
     private double selfCapturePenalty = -200.0;
 
     // -----------------------------

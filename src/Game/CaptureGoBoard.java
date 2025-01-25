@@ -4,6 +4,7 @@ import Players.NaiveAI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import org.w3c.dom.ls.LSOutput;
 
 public class CaptureGoBoard {
     private final int size;
