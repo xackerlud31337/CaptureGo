@@ -42,7 +42,6 @@ public class CaptureGoClientTUI {
         // Main command loop
         System.out.println("Type 'help' to see available commands.");
         while (true) {
-            System.out.print("> ");
             String input = scanner.nextLine().trim();
 
             if (input.equalsIgnoreCase("quit")) {
@@ -66,6 +65,7 @@ public class CaptureGoClientTUI {
             switch (command) {
                 case "list" -> client.sendList();
                 case "queue" -> client.sendQueue();
+                case "board" -> client.showBoard();
                 case "move" -> handleMoveCommand(tokens);
                 case "help" -> displayHelp();
                 default -> System.out.println("Unknown command. Type 'help' for available commands.");
@@ -139,6 +139,8 @@ public class CaptureGoClientTUI {
             tuiClient.start();
         } catch (IOException e) {
             System.out.println("Failed to connect to server: " + e.getMessage());
+            System.out.println("Try again later.");
+            System.out.println("Exiting...");
         }
     }
 }

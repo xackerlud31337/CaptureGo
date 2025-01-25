@@ -100,11 +100,7 @@ public class CaptureGoGame {
         if (winner != null) {
             System.out.println("The winner is " + winner.getName() + "!");
             gameOver = true;
-            return; // Exit the method gracefully
         }
-
-        // Switch turns
-        isPlayer1turn = !isPlayer1turn;
     }
 
     /**
@@ -164,11 +160,6 @@ public class CaptureGoGame {
      * @param player the player placing the stone
      */
     public void placeStone(int row, int col, Player player) {
-        int actualRow = row * 2;
-        int actualCol = col * 2;
-        Cell[][] boardCopy = board.boardDeepCopy();
-
-
         // Validate that the move is on a valid, empty intersection
         if (!board.isValidMove(row, col)) {
             throw new IllegalStateException("Invalid move: Intersection already occupied or out of bounds!");
@@ -177,8 +168,10 @@ public class CaptureGoGame {
         // Place the stone on the board
         makeMove(row, col, player, captureGoal);
 
+        Cell placedCell = board.getCell(row, col);
+
         // Add the cell to the player's occupied cells list
-        player.addCell(boardCopy[actualRow][actualCol]);
+        player.addCell(placedCell);
     }
 
     /**

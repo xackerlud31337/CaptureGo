@@ -71,7 +71,6 @@ public class CaptureGoAiClient {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Type 'help' for commands.");
         while (true) {
-            System.out.print("> ");
             String cmd = scanner.nextLine().trim().toLowerCase();
             switch (cmd) {
                 case "quit" -> {

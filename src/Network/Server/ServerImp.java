@@ -194,7 +194,6 @@ public class ServerImp extends SocketServer {
             ClientHandler opponent = (gameSession.getPlayer1() == clientHandler)
                     ? gameSession.getPlayer2()
                     : gameSession.getPlayer1();
-
             gameSessions.remove(clientHandler);
             gameSessions.remove(opponent);
             if (playersInGame.containsKey(clientHandler)){
@@ -220,13 +219,8 @@ public class ServerImp extends SocketServer {
         gameSessions.remove(gameSession.getPlayer2());
     }
 
-    public void removePlayers(ClientHandler client1, ClientHandler client2){
-        if (gameSessions.containsKey(client1)) {
-            removeGameSession(gameSessions.get(client1));
-        }
-        if (gameSessions.containsKey(client2)) {
-            removeGameSession(gameSessions.get(client2));
-        }
+    public void removePlayerInGame(ClientHandler clientHandler){
+        playersInGame.remove(clientHandler);
     }
 
 
