@@ -1,7 +1,7 @@
 package Game;
 
 public class Cell {
-    public static final String WHITE_O = "\033[37mO\033[0m"; // White stone
+    public static final String WHITE_O = "\033[37mO\033[0m"; // White stone ―――
     public static final String BLUE_O = "\033[34mO\033[0m";  // Blue stone (representing black stone)
 
 

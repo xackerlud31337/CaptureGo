@@ -162,8 +162,8 @@ public class CaptureGoAiClient {
         }
 
         // If your AI or board uses different row/col scaling, adjust accordingly
-        int row = chosenCell.getRow();
-        int col = chosenCell.getCol();
+        int row = chosenCell.getRow() / 2;
+        int col = chosenCell.getCol() / 2;
         int moveIndex = row * BOARD_SIZE + col;
 
         System.out.printf("[AI] Sending move for row=%d, col=%d => index=%d%n", row, col, moveIndex);

@@ -57,21 +57,33 @@ public class CaptureGoBoard {
         return boardCopy;
     }
 
-    /**
-     * Get the size of the board.
-     * @return the size of the board
-     */
     public void render() {
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid[i].length; j++) {
+
+                // Intersection
                 if (grid[i][j] != null) {
-                    System.out.print(grid[i][j].toString());
-                } else if (i % 2 == 0) {
-                    System.out.print("---");
-                } else if (j % 2 == 0) {
-                    System.out.print("|");
-                } else {
-                    System.out.print("   ");
+                    String cellState = grid[i][j].getState();
+                    // Empty intersection => "  +  "
+                    if (cellState.equals("+")) {
+                        System.out.print("  +  ");
+                    }
+                    // Stone => "  ⚫  " (same 5 chars total)
+                    else {
+                        System.out.print("  " + cellState + "  ");
+                    }
+                }
+                // Horizontal line (5 chars: ━━━━━)
+                else if (i % 2 == 0) {
+                    System.out.print("━━━━━");
+                }
+                // Vertical line (5 chars: space-space-┃-space-space)
+                else if (j % 2 == 0) {
+                    System.out.print("  ┃  ");
+                }
+                // Blank space (5 spaces)
+                else {
+                    System.out.print("     ");
                 }
             }
             System.out.println();
