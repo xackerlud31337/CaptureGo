@@ -3,6 +3,10 @@ package Network.Client;
 import Game.CaptureGoBoard;
 import Game.Cell;
 import Game.Player;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 public class ClientGameSession {
     private final CaptureGoBoard board;
@@ -17,13 +21,54 @@ public class ClientGameSession {
         this.player1Turn = true;
     }
 
-    public synchronized void placeStone(int row, int col){
+    public synchronized void placeStone(int row, int col) {
         Player currentPlayer = player1Turn ? player1 : player2;
-        if(board.isValidMove(row, col)) {
+        if (board.isValidMove(row, col)) {
+            // Place the stone
             board.setCell(row, col, currentPlayer.getStone());
+
+            // Perform capture checks
+            Player opponent = player1Turn ? player2 : player1;
+            captureStones(opponent);
+            captureStones(currentPlayer); // Check self for suicide
+
+            // Switch turns
             player1Turn = !player1Turn;
-        } else{
+        } else {
             throw new IllegalArgumentException("Invalid move: Intersection already taken or out of bounds!");
+        }
+    }
+
+    private void captureStones(Player owner) {
+        // Iterate through all stones of the given player
+        for (Cell stone : owner.getOccupiedCells()) {
+            Set<Cell> group = new HashSet<>();
+            Set<Cell> liberties = new HashSet<>();
+            Queue<Cell> queue = new LinkedList<>();
+            queue.add(stone);
+
+            while (!queue.isEmpty()) {
+                Cell current = queue.poll();
+                if (!group.add(current)) continue;
+
+                for (Cell neighbor : board.getNeighbors(current)) {
+                    if (neighbor.isEmpty()) {
+                        liberties.add(neighbor);
+                    } else if (neighbor.getState().equals(stone.getState())) {
+                        queue.add(neighbor);
+                    }
+                }
+            }
+
+            // If no liberties, capture the entire group
+            if (liberties.isEmpty()) {
+                Player capturingPlayer = (owner == player1) ? player2 : player1;
+                for (Cell captured : group) {
+                    captured.setState(capturingPlayer.getStone()); // Change to capturing player's stone
+                    owner.removeCell(captured);                   // Remove from original owner's stones
+                    capturingPlayer.addCell(captured);            // Add to capturing player's stones
+                }
+            }
         }
     }
 

@@ -6,6 +6,8 @@ import Network.Server.Protocol.Protocol;
 import java.io.IOException;
 import java.net.Socket;
 
+import static Network.Server.Protocol.Protocol.DELIMITER;
+
 public class ServerConnection extends SocketConnection {
 
     ClientHandler clientHandler;
@@ -37,26 +39,27 @@ public class ServerConnection extends SocketConnection {
             }
         } else if (message.startsWith(Protocol.LOGIN)) {
             // We don't check if the player is already in a game, and they send LOGIN again, return ALREADYLOGGEDIN
-            if (loggedIn || server.getClients().stream().anyMatch(client -> client.getUsername().equals(message.split(Protocol.DELIMITER)[1]))){
+            if (loggedIn || server.getClients().stream().anyMatch(client -> client.getUsername().equals(message.split(
+                    DELIMITER)[1]))){
                 sendMessage(Protocol.ALREADYLOGGEDIN);
             }else{
-                clientHandler.receiveUsername(message.split(Protocol.DELIMITER)[1]);
+                clientHandler.receiveUsername(message.split(DELIMITER)[1]);
                 loggedIn = true;
-                System.out.println("Client has connected with username: " + message.split(Protocol.DELIMITER)[1]);
+                System.out.println("Client has connected with username: " + message.split(DELIMITER)[1]);
                 sendMessage(Protocol.LOGIN);
                 server.addClient(clientHandler);
             }
         }else{
-            switch (message.split(Protocol.DELIMITER)[0]) {
+            switch (message.split(DELIMITER)[0]) {
                 case Protocol.LIST -> sendMessage(Protocol.formatList(server.getClients()));
                 case Protocol.QUEUE -> queuePlayer(clientHandler);
                 case Protocol.MOVE -> {
                     GameSession gameSession = server.getGameSession(clientHandler);
                     if (gameSession != null) {
                         if (gameSession.getTurn() && gameSession.getPlayer1() == clientHandler) {
-                            gameSession.queueMove(Integer.parseInt(message.split(Protocol.DELIMITER)[1]));
+                            gameSession.queueMove(Integer.parseInt(message.split(DELIMITER)[1]));
                         } else if (!gameSession.getTurn() && gameSession.getPlayer2() == clientHandler) {
-                            gameSession.queueMove(Integer.parseInt(message.split(Protocol.DELIMITER)[1]));
+                            gameSession.queueMove(Integer.parseInt(message.split(DELIMITER)[1]));
                         } else {
                             sendMessage(Protocol.formatError("It is not your turn."));
                         }
@@ -100,6 +103,10 @@ public class ServerConnection extends SocketConnection {
     @Override
     public void start(){
         super.start();
+    }
+
+    public static String formatGameOver(String result, String winner) {
+        return "GAMEOVER" + DELIMITER + result + DELIMITER + winner;
     }
 
 }

@@ -2,6 +2,7 @@ package Network.Client;
 
 import Game.Cell;
 import Game.Player;
+import Network.Server.Protocol.Protocol;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -146,13 +147,33 @@ public class CaptureGoClient {
     }
 
     /**
-     * Receives a move from the server and places it on the board.
-     * @param message the move to place
+     * Receives a move from the server and updates the board.
+     * The message format should include the move and any captured cells (if applicable).
+     * Example format: "MOVE~moveIndex~capturedIndices"
+     * @param message the move details sent by the server
      */
-    protected void receiveMove(int message) {
-        int row = message / 7;
-        int col = message % 7;
+    protected void receiveMove(String message) {
+        String[] parts = message.split("~");
+        int moveIndex = Integer.parseInt(parts[1]);
+        int row = moveIndex / 7;
+        int col = moveIndex % 7;
+
+        // Place the stone
         game.placeStone(row, col);
+
+        // Process captures (if any)
+        if (parts.length > 3 && !parts[2].isEmpty()) {
+            String[] capturedIndices = parts[2].split(",");
+            String capturerStone = parts[3]; // Capturer's stone color
+            for (String captured : capturedIndices) {
+                int capturedIndex = Integer.parseInt(captured);
+                int capturedRow = capturedIndex / 7;
+                int capturedCol = capturedIndex % 7;
+                game.getBoard().getCell(capturedRow, capturedCol).setState(capturerStone); // Update state
+            }
+        }
+
+        // Re-render the board
         game.getBoard().render();
     }
 
@@ -204,5 +225,16 @@ public class CaptureGoClient {
         }else{
             game.getBoard().render();
         }
+    }
+
+    protected void receiveGameOver(String result, String winner) {
+        if ("VICTORY".equals(result)) {
+            System.out.println("Game over! The winner is: " + winner);
+        } else if ("DRAW".equals(result)) {
+            System.out.println("Game over! It's a draw.");
+        } else {
+            System.out.println("Game over! Reason: " + result);
+        }
+        inGame = false; // Mark the game as ended
     }
 }

@@ -42,7 +42,13 @@ public class ClientConnection extends SocketConnection {
             case Protocol.LIST -> client.receiveList(message);
             case Protocol.QUEUE -> client.receiveQueue();
             case Protocol.NEWGAME -> client.receiveGameStart(message);
-            case Protocol.MOVE -> client.receiveMove(Integer.parseInt(message.split(Protocol.DELIMITER)[1]));
+            case Protocol.MOVE -> client.receiveMove(message); // Pass the full message string
+            case Protocol.GAMEOVER -> {
+                String[] parts = message.split(Protocol.DELIMITER);
+                String result = parts[1]; // VICTORY, DRAW, etc.
+                String winner = parts.length > 2 ? parts[2] : ""; // Winner's name, if applicable
+                client.receiveGameOver(result, winner);
+            }
             case Protocol.ALREADYLOGGEDIN -> client.receiveAlreadyLoggedIn();
             case Protocol.ERROR -> client.receiveError(message.split(Protocol.DELIMITER)[1]);
             default -> System.out.println("Invalid message received: " + message);

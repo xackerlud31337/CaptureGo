@@ -175,7 +175,7 @@ public class ServerImp extends SocketServer {
         player2.getConnection().sendMessage(Protocol.formatNewGame(player1.getUsername(), player2.getUsername()));
 
         //Change this to change the game
-        GameSession newGameSession = new GameSession(player1, player2, 6, 10, this);
+        GameSession newGameSession = new GameSession(player1, player2, 6, 1, this);
         gameSessions.put(player1, newGameSession);
         gameSessions.put(player2, newGameSession);
         playersInGame.put(player1, player2);
