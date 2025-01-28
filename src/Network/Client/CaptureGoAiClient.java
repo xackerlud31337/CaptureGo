@@ -38,6 +38,9 @@ public class CaptureGoAiClient {
     }
 
 
+    /**
+     * Starts the client, logs in, joins the queue, and starts the AI polling loop.
+     */
     public void start() {
         System.out.println("Logging in with username: " + client.getOwnPlayer().getName());
         client.login(client.getOwnPlayer().getName());
