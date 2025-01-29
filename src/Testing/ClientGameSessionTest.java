@@ -69,7 +69,7 @@ public class ClientGameSessionTest {
 //        for (int i = 0; i < 7; i++) {
 //            for (int j = 0; j < 7; j++) {
 //                if ((i + j) % 2 == 0 && gameSession.getBoard().isValidMove(i, j)) {
-//                    gameSession.placeStone(i, j, player);
+//                    gameSession.placeStone(i, j, client1);
 //                }
 //            }
 //        }

@@ -42,7 +42,7 @@ public class ServerImp extends SocketServer {
      * Returns the clients connected to this server.
      * @return set of the clients connected to this server.
      */
-    protected Set<ClientHandler> getClients() {
+    public Set<ClientHandler> getClients() {
         return Set.copyOf(clients);
     }
 
@@ -51,7 +51,7 @@ public class ServerImp extends SocketServer {
      * Removes a client to the server.
      * @param clientHandler the client to remove
      */
-    protected synchronized void removeClient(ClientHandler clientHandler) {
+    public synchronized void removeClient(ClientHandler clientHandler) {
         clients.remove(clientHandler);
         System.out.println(clientHandler.getUsername() + " has disconnected.");
     }
@@ -60,7 +60,7 @@ public class ServerImp extends SocketServer {
      * Adds a client to the server.
      * @param clientHandler the client to add
      */
-    protected synchronized void addClient(ClientHandler clientHandler) {
+    public synchronized void addClient(ClientHandler clientHandler) {
         clients.add(clientHandler);
     }
 
@@ -170,6 +170,8 @@ public class ServerImp extends SocketServer {
         ClientHandler player2 = playersQueue.poll();
         assert player1 != null;
         assert player2 != null;
+        assert player1.getUsername() != null;
+        assert player2.getUsername() != null;
 
         player1.getConnection().sendMessage(Protocol.formatNewGame(player1.getUsername(), player2.getUsername()));
         player2.getConnection().sendMessage(Protocol.formatNewGame(player1.getUsername(), player2.getUsername()));

@@ -1,4 +1,4 @@
-package GameTest;
+package Testing;
 
 import Game.CaptureGoGame;
 import Game.CaptureGoBoard;
