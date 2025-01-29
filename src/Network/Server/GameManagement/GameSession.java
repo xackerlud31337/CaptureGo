@@ -23,10 +23,15 @@ public class GameSession {
     private final ServerImp server;
 
     /**
-     * Constructs a server GameSession that uses the same logic as your local CaptureGoGame.
+     * Constructs a new GameSession.
+     *
+     * @param player1 The first player.
+     * @param player2 The second player.
+     * @param boardSize The size of the game board.
+     * @param captureGoal The number of captures required to win.
+     * @param server The server instance managing the game.
      */
-    public GameSession(ClientHandler player1, ClientHandler player2,
-                       int boardSize, int captureGoal, ServerImp server) {
+    public GameSession(ClientHandler player1, ClientHandler player2, int boardSize, int captureGoal, ServerImp server) {
         this.player1 = player1;
         this.player2 = player2;
         this.board = new CaptureGoBoard(boardSize);

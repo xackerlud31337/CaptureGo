@@ -30,6 +30,10 @@ public class ServerConnection extends SocketConnection {
         clientHandler.setConnection(this);
     }
 
+    /**
+     * Handles the message received from the client.
+     * @param message the message received
+     */
     @Override
     protected void handleMessage(String message) {
         if (!helloNotReceived){
@@ -86,6 +90,9 @@ public class ServerConnection extends SocketConnection {
         }
     }
 
+    /**
+     * Handles the disconnect of the client.
+     */
     @Override
     protected void handleDisconnect() {
         clientHandler.handleDisconnect();
@@ -94,17 +101,28 @@ public class ServerConnection extends SocketConnection {
         }
     }
 
+    /**
+     * Sends a message to the client.
+     * @param msg the message to send
+     * @return true if the message was sent successfully
+     */
     @Override
     public boolean sendMessage(String msg){
         super.sendMessage(msg);
         return true;
     }
 
+    /**
+     * Starts the connection.
+     */
     @Override
     public void start(){
         super.start();
     }
 
+    /**
+     * Closes the connection.
+     */
     public static String formatGameOver(String result, String winner) {
         return "GAMEOVER" + DELIMITER + result + DELIMITER + winner;
     }
