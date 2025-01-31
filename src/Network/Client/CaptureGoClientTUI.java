@@ -22,6 +22,7 @@ public class CaptureGoClientTUI {
     /**
      * Constructor initializes the TUI client and connects to the server.
      */
+
     public CaptureGoClientTUI(String address, int port, String username) throws IOException {
         client = new CaptureGoClient(address, port);
         client.setOwnPlayer(new Player(username, null));
@@ -176,7 +177,12 @@ public class CaptureGoClientTUI {
     private void displayTip() {
         Random random = new Random();
         int randomIndex = random.nextInt(TIPS.length);
-        System.out.println("[Tip] " + TIPS[randomIndex]);
+
+        // ANSI escape codes for blue text
+        String blueColor = "\033[34m";
+        String resetColor = "\033[0m";
+
+        System.out.println(blueColor + "[Tip] " + TIPS[randomIndex] + resetColor);
     }
 
     /**
