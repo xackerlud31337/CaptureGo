@@ -5,15 +5,13 @@ import java.util.List;
 
 public class Player {
     private String name;
-    private String stone;             // Stone representation (Cell.WHITE_O or Cell.BLUE_O)
+    private String stone;             // Stone representation (Cell.WHITE_O or Cell.BLUE_O);
     private List<Cell> occupiedCells;
+    private int capturedStones;
 
 
     public Player(String name, String stone) {
         this.name = name;
-        if (!stone.equals(Cell.WHITE_O) && !stone.equals(Cell.BLUE_O)) {
-            throw new IllegalArgumentException("Invalid stone type! Use Cell.WHITE_O or Cell.BLUE_O.");
-        }
         this.stone = stone;
         this.occupiedCells = new ArrayList<>();
     }
@@ -32,6 +30,14 @@ public class Player {
      */
     public String getStone() {
         return stone;
+    }
+
+    /**
+     * Set the stone of the player.
+     * @param stone the stone to set
+     */
+    public void setStone(String stone) {
+        this.stone = stone;
     }
 
     /**
@@ -57,6 +63,36 @@ public class Player {
      */
     public void resetOccupiedCells() {
         occupiedCells.clear();
+    }
+
+    /**
+     * Remove a cell from the player's occupied cells list.
+     * @param cell the cell to remove
+     */
+    public void removeCell(Cell cell) {
+        if (cell != null) {
+            occupiedCells.remove(cell);
+        }
+    }
+
+    /**
+     * Add to the player's captured stones count.
+     * @param count the number of stones captured.
+     */
+    public void addCapturedStones(int count) {
+        this.capturedStones += count;
+    }
+
+    /**
+     * Get the number of stones captured by the player.
+     * @return the number of captured stones.
+     */
+    public int getCapturedStones() {
+        return capturedStones;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override
