@@ -1,7 +1,7 @@
 [![Logo](img.png)]()
 
 # Capture Go Game: Client-Server System 🎲
-(Resit-7) 
+
 
 ![Java](https://img.shields.io/badge/java-v11+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green)
